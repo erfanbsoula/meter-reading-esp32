@@ -2,9 +2,11 @@
 #define __INCLUDES_H__
 
 // All Dependencies
+#include "esp_system.h"
 #include "esp_wifi.h"
 #include "esp_event.h"
 #include "nvs_flash.h"
+#include "nvs.h"
 #include "driver/gpio.h"
 #include "core/net.h"
 #include "drivers/wifi/esp32_wifi_driver.h"

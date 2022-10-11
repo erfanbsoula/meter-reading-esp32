@@ -45,6 +45,9 @@ K210config k210config;
  */
 bool_t uartBusy = FALSE;
 
+// NVS handle
+nvs_handle_t nvs_handle;
+
 // ********************************************************************************************
 // UART initialization & UART task
 
@@ -142,6 +145,24 @@ void initManual()
    // we have no positions saved in th startup
    // so the pointer should be null
    k210config.positions = NULL;
+
+   // initialize nvs flash
+   esp_err_t err = nvs_flash_init();
+   if(err == ESP_ERR_NVS_NO_FREE_PAGES ||
+      err == ESP_ERR_NVS_NEW_VERSION_FOUND)
+   {
+      // NVS partition was truncated and needs to be erased
+      // Retry nvs_flash_init
+      ESP_ERROR_CHECK(nvs_flash_erase());
+      err = nvs_flash_init();
+   }
+   ESP_ERROR_CHECK(err);
+
+   err = nvs_open("storage", NVS_READWRITE, &nvs_handle);
+   if (err != ESP_OK) {
+      ESP_LOGE("NVS", "Error (%s) opening NVS handle!\n", esp_err_to_name(err));
+      // how to handle this?!
+   }
 }
 
 // ********************************************************************************************
@@ -448,6 +469,37 @@ error_t cameraImgHandler(HttpConnection* connection)
 }
 
 // ********************************************************************************************
+
+bool_t saveAiResultNVS(char_t* result)
+{
+   // err = nvs_get_i32(nvs_handle, "restart_counter", &restart_counter);
+   // switch (err) {
+   //    case ESP_OK:
+   //          printf("Done\n");
+   //          printf("Restart counter = %d\n", restart_counter);
+   //          break;
+   //    case ESP_ERR_NVS_NOT_FOUND:
+   //          printf("The value is not initialized yet!\n");
+   //          break;
+   //    default :
+   //          printf("Error (%s) reading!\n", esp_err_to_name(err));
+   // }
+
+   esp_err_t err = nvs_set_str(nvs_handle, "AiRes", result);
+   if (err != ESP_OK) {
+      ESP_LOGE("NVS", "Failed to set the string value!");
+      return false;
+   }
+
+   err = nvs_commit(nvs_handle);
+   if (err != ESP_OK) {
+      ESP_LOGE("NVS", "Failed to commit!");
+      return false;
+   }
+
+   // Close
+   // nvs_close(nvs_handle);
+}
 
 /**
  * validates the k210 response for ai result request
