@@ -1,4 +1,4 @@
-# ESP32 codes for digit-detection project
+# Meter Reading project (ESP32 codes)
 ESP32 web server with UART for Analog Meter Reading Project
 
 ## Environment
