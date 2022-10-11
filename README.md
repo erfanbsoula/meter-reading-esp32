@@ -3,5 +3,5 @@ ESP32 web server with UART for Analog Meter Reading Project
 
 ## Environment
 This project is developed with:
-  * ESP-IDF v4.4.1 (maintainance period: Aug-2024)
+  * ESP-IDF v4.4.2 (maintainance period: Aug-2024)
   * CycloneTCP v2.1.6
