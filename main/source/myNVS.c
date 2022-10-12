@@ -3,7 +3,7 @@
 
 #define NVS_PAGE_NAME "storage"
 
-nvs_handle_t nvsInit()
+nvs_handle_t nvsStart()
 {
    nvs_handle_t myNVS;
 
@@ -34,7 +34,7 @@ bool_t nvsFinish(nvs_handle_t myNVS)
 
 bool_t nvsSaveString(char_t* varName, char_t* varValue)
 {
-   nvs_handle_t myNVS = nvsInit();
+   nvs_handle_t myNVS = nvsStart();
    if ( !myNVS ) {
       return false;
    }
@@ -50,7 +50,7 @@ bool_t nvsSaveString(char_t* varName, char_t* varValue)
 
 bool_t nvsReadString(char_t* varName, char_t** varValue)
 {
-   nvs_handle_t myNVS = nvsInit();
+   nvs_handle_t myNVS = nvsStart();
    if ( !myNVS ) {
       return false;
    }

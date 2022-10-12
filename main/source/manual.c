@@ -442,6 +442,9 @@ error_t getAndSendCameraImg(HttpConnection* connection)
  */
 error_t cameraImgHandler(HttpConnection* connection)
 {
+   if (strcmp(connection->request.method, "GET"))
+      return ERROR_NOT_FOUND;
+
    ESP_LOGI("API", "camera image requested!");
    if (uartBusy)
       return apiSendRejectionManual(connection);
@@ -490,6 +493,9 @@ bool_t checkAiResponseHelper()
  */
 error_t getAIHandler(HttpConnection* connection)
 {
+   if (strcmp(connection->request.method, "GET"))
+      return ERROR_NOT_FOUND;
+
    ESP_LOGI("API", "AI result requested!");
    if (uartBusy)
       return apiSendRejectionManual(connection);
