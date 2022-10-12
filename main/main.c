@@ -27,6 +27,7 @@
  **/
 
 //Dependencies
+#include "esp_err.h"
 #include "esp_wifi.h"
 #include "esp_event.h"
 #include "nvs_flash.h"
@@ -162,7 +163,16 @@ void app_main(void)
    TRACE_INFO("\r\n");
 
    //Initialize NVS memory
-   nvs_flash_init();
+   esp_err_t err = nvs_flash_init();
+   if(err == ESP_ERR_NVS_NO_FREE_PAGES ||
+      err == ESP_ERR_NVS_NEW_VERSION_FOUND)
+   {
+      // NVS partition was truncated and needs to be erased
+      ESP_ERROR_CHECK(nvs_flash_erase());
+      // Retry initializing NVS
+      err = nvs_flash_init();
+   }
+   ESP_ERROR_CHECK(err);
 
    //Create default event loop
    esp_event_loop_create_default();
@@ -228,14 +238,7 @@ void app_main(void)
    //Create a Wi-Fi network (AP mode)
    wifiEnableAp();
 
-   // initialize serial communication and serial task
-   serialInit();
-   BaseType_t ret = xTaskCreatePinnedToCore(
-      serial_event_task, "serial_event_task", 2048, NULL, 12, NULL, 1
-   );
-   if(ret != pdPASS)
-      ESP_LOGE("Serial","Failed to create serial task!\r\n");
-   
+   // Run the manual codes for initialization
    initManual();
 }
 

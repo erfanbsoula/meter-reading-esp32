@@ -1,6 +1,7 @@
 #include "includes.h"
 #include "manual.h"
 #include "httpHelper.h"
+#include "myNVS.h"
 
 // **! only change the (manual) fields !**
 // ********************************************************************************************
@@ -31,9 +32,6 @@ uint8_t* buffer;
 // this will show the number of bytes recieved by the UART event handler:
 size_t in_buf_len = 0;
 
-// will hold the AI-config data recieved from the client
-K210config k210config;
-
 /**
  * in each callback function that wants to use the UART serial communication with k210,
  * check this flag and if set, return immediately.
@@ -45,8 +43,10 @@ K210config k210config;
  */
 bool_t uartBusy = FALSE;
 
-// NVS handle
-nvs_handle_t nvs_handle;
+// will hold the AI-config data recieved from the client
+K210config k210config;
+
+#define NVS_AI_VARIABLE_NAME "AiRes"
 
 // ********************************************************************************************
 // UART initialization & UART task
@@ -80,7 +80,7 @@ void serialInit()
 // **! you don't need to change this task in order to intract with UART !**
 void serial_event_task(void *pvParameters)
 {
-   ESP_LOGI("Serial", "Start serial task on Core: %d\r\n", xPortGetCoreID());
+   ESP_LOGI("Serial", "Start serial task on Core: %d", xPortGetCoreID());
    ESP_LOGI("serialTask", "Free Heap Size: %dkb", xPortGetFreeHeapSize()/1024);
 
    // allocating the serial buffer
@@ -146,22 +146,21 @@ void initManual()
    // so the pointer should be null
    k210config.positions = NULL;
 
-   // initialize nvs flash
-   esp_err_t err = nvs_flash_init();
-   if(err == ESP_ERR_NVS_NO_FREE_PAGES ||
-      err == ESP_ERR_NVS_NEW_VERSION_FOUND)
-   {
-      // NVS partition was truncated and needs to be erased
-      // Retry nvs_flash_init
-      ESP_ERROR_CHECK(nvs_flash_erase());
-      err = nvs_flash_init();
+   // initialize serial communication and serial task
+   serialInit();
+   BaseType_t ret = xTaskCreatePinnedToCore(
+      serial_event_task, "serial_event_task", 2048, NULL, 12, NULL, 1
+   );
+   if(ret != pdPASS) { // error check
+      ESP_LOGE("Serial","Failed to create serial task!\r\n");
    }
-   ESP_ERROR_CHECK(err);
 
-   err = nvs_open("storage", NVS_READWRITE, &nvs_handle);
-   if (err != ESP_OK) {
-      ESP_LOGE("NVS", "Error (%s) opening NVS handle!\n", esp_err_to_name(err));
-      // how to handle this?!
+   // retrieve the ai reading before shutdown
+   char_t* myVar;
+   bool_t res = nvsReadString(NVS_AI_VARIABLE_NAME, &myVar);
+   if (res) {
+      ESP_LOGI("NVS", "{%s = %s}", NVS_AI_VARIABLE_NAME, myVar);
+      free(myVar);
    }
 }
 
@@ -469,37 +468,6 @@ error_t cameraImgHandler(HttpConnection* connection)
 }
 
 // ********************************************************************************************
-
-bool_t saveAiResultNVS(char_t* result)
-{
-   // err = nvs_get_i32(nvs_handle, "restart_counter", &restart_counter);
-   // switch (err) {
-   //    case ESP_OK:
-   //          printf("Done\n");
-   //          printf("Restart counter = %d\n", restart_counter);
-   //          break;
-   //    case ESP_ERR_NVS_NOT_FOUND:
-   //          printf("The value is not initialized yet!\n");
-   //          break;
-   //    default :
-   //          printf("Error (%s) reading!\n", esp_err_to_name(err));
-   // }
-
-   esp_err_t err = nvs_set_str(nvs_handle, "AiRes", result);
-   if (err != ESP_OK) {
-      ESP_LOGE("NVS", "Failed to set the string value!");
-      return false;
-   }
-
-   err = nvs_commit(nvs_handle);
-   if (err != ESP_OK) {
-      ESP_LOGE("NVS", "Failed to commit!");
-      return false;
-   }
-
-   // Close
-   // nvs_close(nvs_handle);
-}
 
 /**
  * validates the k210 response for ai result request
