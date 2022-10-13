@@ -1,36 +1,14 @@
 #include "includes.h"
 #include "manual.h"
 #include "httpHelper.h"
+#include "uartHelper.h"
 #include "myNVS.h"
 
-// **! only change the (manual) fields !**
 // ********************************************************************************************
-// UART configuration
-
-#define UART (UART_NUM_2)
-#define SER_TXD  (GPIO_NUM_33)
-#define SER_RXD  (GPIO_NUM_32)
-// #define PATTERN_CHR_NUM (3)
-
-#define UART_BUF_SIZE (1024)
-#define RD_BUF_SIZE (UART_BUF_SIZE)
-static QueueHandle_t uart0_queue;
-
-// ********************************************************************************************
-// serial communication configs
 
 #define TOTAL_SIZE 76800    // number of bytes to expect when requesing image
-#define BUFFER_SIZE 39000    // number of bytes to transfer at each try (manual)
 
-// this size will be actually allocated and used as the serial buffer:
-// **! make sure you have enough free memory. if not, change the BUFFER_SIZE !**
-#define ACTUAL_BUF_SIZE (BUFFER_SIZE + 1000)
-
-// this will point to the beginning of the allocated buffer:
-uint8_t* buffer;
-
-// this will show the number of bytes recieved by the UART event handler:
-size_t in_buf_len = 0;
+#define NVS_AI_VARIABLE_NAME "AiRes"
 
 /**
  * in each callback function that wants to use the UART serial communication with k210,
@@ -46,98 +24,6 @@ bool_t uartBusy = FALSE;
 // will hold the AI-config data recieved from the client
 K210config k210config;
 
-#define NVS_AI_VARIABLE_NAME "AiRes"
-
-// ********************************************************************************************
-// UART initialization & UART task
-
-void serialInit()
-{
-	ESP_LOGI("Serial","Initializing serial communication!");
-
-   uart_config_t uart_config = {
-		.baud_rate = 921600 ,
-		.data_bits = UART_DATA_8_BITS,
-		.parity    = UART_PARITY_DISABLE, // disable parity check
-		.stop_bits = UART_STOP_BITS_1,
-		.flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
-      .source_clk = UART_SCLK_APB,
-	};
-   uart_driver_install(
-      UART, UART_BUF_SIZE * 2, UART_BUF_SIZE * 2, 20, &uart0_queue, 0
-   );
-	uart_param_config(UART, &uart_config);
-	uart_set_pin(
-      UART, SER_TXD, SER_RXD, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE
-   );
-	uart_set_mode(UART, UART_MODE_UART);
-   // you can also use pattern detection (we don't need it yet!)
-   // uart_enable_pattern_det_baud_intr(UART, '+', PATTERN_CHR_NUM, 9, 0, 0);
-   uart_pattern_queue_reset(UART, 20);
-}
-
-// this task is pinned to the core1 and will always be running
-// **! you don't need to change this task in order to intract with UART !**
-void serial_event_task(void *pvParameters)
-{
-   ESP_LOGI("Serial", "Start serial task on Core: %d", xPortGetCoreID());
-   ESP_LOGI("serialTask", "Free Heap Size: %dkb", xPortGetFreeHeapSize()/1024);
-
-   // allocating the serial buffer
-   buffer = (uint8_t*) malloc(ACTUAL_BUF_SIZE);
-   if (buffer == NULL)
-      ESP_LOGE("serialTask", "Couldn't allocate memory");
-   else
-      ESP_LOGI("serialTask", "Buffer memory allocation successful!");
-
-   uart_event_t event;
-   size_t buffered_size;
-
-   for(;;) {
-      if(xQueueReceive(uart0_queue, (void *) &event, (portTickType)portMAX_DELAY))
-      {
-         switch(event.type)
-         {
-            case UART_DATA:
-               uart_read_bytes(UART, buffer+in_buf_len, event.size, 20);
-               in_buf_len += event.size;
-               break;
-            case UART_FIFO_OVF:
-               ESP_LOGI("serialTask", "hw fifo overflow");
-               uart_flush_input(UART);
-               xQueueReset(uart0_queue);
-               break;
-            case UART_BUFFER_FULL:
-               ESP_LOGI("serialTask", "ring buffer full");
-               uart_flush_input(UART);
-               xQueueReset(uart0_queue);
-               break;
-            case UART_BREAK:
-               ESP_LOGI("serialTask", "uart rx break");
-               break;
-            case UART_PARITY_ERR: // this feature is disabled
-               ESP_LOGI("serialTask", "uart parity error");
-               break;
-            case UART_FRAME_ERR:
-               ESP_LOGI("serialTask", "uart frame error");
-               break;
-            case UART_PATTERN_DET: // this feature is not enabled
-               uart_get_buffered_data_len(UART, &buffered_size);
-               int pos = uart_pattern_pop_pos(UART);
-               ESP_LOGI("serialTask", "[UART PATTERN DETECTED] pos: %d, buffered size: %d", pos, buffered_size);
-               break;
-            default:
-               ESP_LOGI("serialTask", "uart event type: %d", event.type);
-               break;
-         }
-      }
-   }
-
-   free(buffer);
-   buffer = NULL;
-   vTaskDelete(NULL);
-}
-
 // ********************************************************************************************
 
 void initManual()
@@ -147,13 +33,7 @@ void initManual()
    k210config.positions = NULL;
 
    // initialize serial communication and serial task
-   serialInit();
-   BaseType_t ret = xTaskCreatePinnedToCore(
-      serial_event_task, "serial_event_task", 2048, NULL, 12, NULL, 1
-   );
-   if(ret != pdPASS) { // error check
-      ESP_LOGE("Serial","Failed to create serial task!\r\n");
-   }
+   serialInit();   
 
    // retrieve the ai reading before shutdown
    char_t* myVar;
@@ -182,7 +62,7 @@ bool_t parseConfigs(char_t* data) {
    {
       const char_t *error_ptr = cJSON_GetErrorPtr();
       if (error_ptr != NULL)
-         ESP_LOGE("CJSON", "Error before: %s", error_ptr);
+         ESP_LOGE("CJSON", "error before: %s", error_ptr);
 
       return parseFailCleanUp(root);
    }
@@ -208,7 +88,7 @@ bool_t parseConfigs(char_t* data) {
    k210config.positions = (Position*) malloc(sizeof(Position) * k210config.digitCount);
    if (k210config.positions == NULL)
    {
-      ESP_LOGE("CJSON", "Unable to allocate memory!");
+      ESP_LOGE("CJSON", "unable to allocate memory!");
       return parseFailCleanUp(root);
    }
 
@@ -267,8 +147,8 @@ bool_t sendConfigToK210()
    }
    free(tmp);
 
-   uart_write_bytes(UART, str, strlen(str));
-   ESP_LOGI("UART", "sent: %s", str);
+   uartSendString(str);
+   ESP_LOGI("UART", "sent %s", str);
    free(str);
    return TRUE;
 }
@@ -300,7 +180,7 @@ error_t configHandler(HttpConnection* connection)
       parsingResult = parseConfigs(data);
       free(data);
    }
-   else ESP_LOGE("ConfigParser", "Couldn't allocate memory!");
+   else ESP_LOGE("API", "Config Parser couldn't allocate memory!");
 
    if (parsingResult)
    {
@@ -324,14 +204,17 @@ error_t sendChunk(HttpConnection* connection)
    error_t error;
    uint8_t* tmp_buf = (uint8_t*) malloc(4096);
    if (tmp_buf == NULL)
-      ESP_LOGE("API", "Couldn't allocate memory");
+      ESP_LOGE("API", "couldn't allocate memory");
       //! handle this error
 
+   uint8_t* buffer = uartGetBuffer();
+   size_t bufLen = uartGetBufLength();
+
    uint32_t counter = 0;
-   while(counter < in_buf_len)
+   while(counter < bufLen)
    {
       uint32_t i = 0;
-      for (i = 0; i < 2048 && counter+i < in_buf_len; i++)
+      for (i = 0; i < 2048 && counter+i < bufLen; i++)
       {
          tmp_buf[2*i] = buffer[counter+i] / 16 + 48;
          tmp_buf[2*i + 1] = buffer[counter+i] % 16 + 48;
@@ -361,32 +244,6 @@ size_t findChunkSize(size_t size_count)
 }
 
 /**
- * waits until the size of the recieved data in the buffer
- * matches the chunkSize parameter.
- * 
- * waitCount is the number of 100ms periods that the function
- * will wait for the data.
- * 
- * if filling the buffer takes longer than (waitCount*100)ms,
- * function will return a false value indicating failure.
- * 
- * otherwise, function will return a true value indicating
- * that the data is ready in the buffer.
- */
-bool_t waitForBuffer(size_t chunkSize, uint_t waitCount)
-{
-   uint_t counter = 0;
-   while (in_buf_len < chunkSize) {
-      if (waitCount < counter) {
-         return FALSE;
-      }
-      vTaskDelay(100 / portTICK_PERIOD_MS);
-      counter += 1;
-   }
-   return TRUE;
-}
-
-/**
  * requests the camera image from k210 over UART
  * in chunks equal to the buffer size and sends each chunk
  * to the client immediately using the sendChunk function.
@@ -399,12 +256,12 @@ error_t getAndSendCameraImg(HttpConnection* connection)
    char_t cmdStr[20];
 
    vTaskDelay(200 / portTICK_PERIOD_MS);
-   uart_write_bytes(UART, (const char *) "GetNew:1", 8);
+   uartSendBytes("GetNew:1", 8);
    vTaskDelay(400 / portTICK_PERIOD_MS);
 
    while (size_count < TOTAL_SIZE)
    {
-      in_buf_len = 0;
+      uartClearBuffer();
       chunk_size = findChunkSize(size_count);
 
       if (size_count == 0) // if first request
@@ -412,19 +269,19 @@ error_t getAndSendCameraImg(HttpConnection* connection)
       else // if it's not the first request ...
          sprintf(cmdStr, "Next:%d", chunk_size);
 
-      uart_write_bytes(UART, (const char *) cmdStr, strlen(cmdStr));
+      uartSendString(cmdStr);
       if (!waitForBuffer(chunk_size, 10)) {
          ESP_LOGI("API", "K210 seems to be off! exiting the task ...");
          return NO_ERROR;
       }
-      ESP_LOGI("API", "read chunk with size %d", in_buf_len);
+      ESP_LOGI("API", "read chunk with size %d", uartGetBufLength());
 
       error_t error = sendChunk(connection);
       if (error) return error;
       size_count += chunk_size;
    }
 
-   in_buf_len = 0;
+   uartClearBuffer();
    vTaskDelay(100 / portTICK_PERIOD_MS);
    return NO_ERROR;
 }
@@ -477,6 +334,8 @@ error_t cameraImgHandler(HttpConnection* connection)
  */
 bool_t checkAiResponseHelper()
 {
+   uint8_t* buffer = uartGetBuffer();
+
    char_t tmp[5];
    strncpy(tmp, (char_t*)buffer, 4);
    tmp[4] = '\0';
@@ -501,13 +360,14 @@ error_t getAIHandler(HttpConnection* connection)
       return apiSendRejectionManual(connection);
 
    uartBusy = TRUE;
+   uint8_t* buffer = uartGetBuffer();
 
    vTaskDelay(100 / portTICK_PERIOD_MS);
-   uart_write_bytes(UART, (const char *) "AIread:1", 8);
+   uartSendBytes("AIread:1", 8);
    vTaskDelay(400 / portTICK_PERIOD_MS);
 
-   in_buf_len = 0;
-   uart_write_bytes(UART, (const char *) "AIsend:1", 8);
+   uartClearBuffer();
+   uartSendBytes("AIsend:1", 8);
    if (!waitForBuffer(5 + k210config.digitCount, 10)) {
       ESP_LOGI("API", "K210 seems to be off! exiting the task ...");
       uartBusy = FALSE;
