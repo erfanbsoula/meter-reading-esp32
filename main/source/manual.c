@@ -56,7 +56,15 @@ void initManual()
    serialInit();
 
    // retrieve last configuration and reading if possible
-   aiRetrieveState();   
+   aiRetrieveState();
+
+   // initialize Serial Event Task
+   BaseType_t ret = xTaskCreatePinnedToCore(
+      aiTask, "aiTask", 2048, NULL, 12, NULL, 1
+   );
+   if(ret != pdPASS) { // error check
+      ESP_LOGE("aiTask","failed to create task!");
+   }
 }
 
 // ********************************************************************************************
@@ -80,7 +88,7 @@ void aiRetrieveState()
    free(data);
 
    if (!isConfigured) {
-      ESP_LOGI("Init", "failed to configure k210!");
+      ESP_LOGI("Init", "failed to configure k210");
       return;
    }
    ESP_LOGI("Init", "configured k210 successfully!");
@@ -89,7 +97,7 @@ void aiRetrieveState()
    if (!readingValid) return;
 
    if (strlen(aiReading) != k210config.digitCount) {
-      ESP_LOGI("Init", "retrieved AI-reading doesn't match the config!");
+      ESP_LOGI("Init", "retrieved AI-reading doesn't match the config");
       free(aiReading);
       readingValid = FALSE;
       return;
@@ -104,7 +112,10 @@ void aiTask(void *pvParameters)
 {
    while(1) {
       vTaskDelay(5000 / portTICK_PERIOD_MS);
-      if (!isConfigured) continue;
+      if (!isConfigured) {
+         ESP_LOGI("aiTask", "waiting for configuration");
+         continue;
+      }
 
       if (!readingValid) {
          free(aiReading);
@@ -112,10 +123,15 @@ void aiTask(void *pvParameters)
       }
 
       readingValid = getAiHelper(aiReading);
-      if(readingValid) {
+      if (readingValid) {
          ESP_LOGI("aiTask", "got current AI-reading successfully!");
+         bool_t result;
+         result = nvsSaveString(NVS_AI_RESULT_VAR_NAME, aiReading);
+         if (!result) {
+            ESP_LOGI("aiTask", "couldn't save AI-reading");
+         }
       }
-      else ESP_LOGI("aiTask", "couldn't get AI-reading!");
+      else ESP_LOGI("aiTask", "couldn't get AI-reading");
    }
 }
 
@@ -260,6 +276,8 @@ error_t configHandler(HttpConnection* connection)
    {
       sendConfigToK210();
       nvsSaveString(NVS_AI_CONFIG_VAR_NAME, data);
+      readingValid = FALSE;
+      isConfigured = TRUE;
    }
 
    free(data);
