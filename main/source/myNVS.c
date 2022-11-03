@@ -63,6 +63,11 @@ bool_t nvsReadString(char_t* varName, char_t** varValue)
    }
 
    (*varValue) = malloc(required_size + 1);
+   if (*varValue == NULL) {
+      ESP_LOGE("NVS", "memory allocation failed!");
+      return false;
+   }
+
    err = nvs_get_str(myNVS, varName, (*varValue), &required_size);
    if (err != ESP_OK) {
       ESP_LOGE("NVS", "Failed to get the value of %s!", varName);

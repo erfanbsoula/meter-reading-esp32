@@ -6,9 +6,15 @@
 
 // ********************************************************************************************
 
-#define TOTAL_SIZE 76800    // number of bytes to expect when requesing image
+// number of bytes to expect when requesing image
+#define TOTAL_SIZE 76800
 
-#define NVS_AI_VARIABLE_NAME "AiRes"
+// NVS variable names
+#define NVS_AI_RESULT_VAR_NAME "AiRes"
+#define NVS_AI_CONFIG_VAR_NAME "AiConfig"
+
+// ********************************************************************************************
+// Global Variables
 
 /**
  * in each callback function that wants to use the UART serial communication with k210,
@@ -23,6 +29,20 @@ bool_t uartBusy = FALSE;
 
 // will hold the AI-config data recieved from the client
 K210config k210config;
+bool_t isConfigured = FALSE;
+
+// will hold the AI-reading result recieved from k210
+char_t* aiReading;
+bool_t readingValid = FALSE;
+
+// ********************************************************************************************
+// forward declaration of functions
+
+void aiRetrieveState();
+void aiTask(void *pvParameters);
+bool_t parseConfigs(char_t* data);
+bool_t sendConfigToK210();
+bool_t getAiHelper(char_t* res);
 
 // ********************************************************************************************
 
@@ -33,14 +53,69 @@ void initManual()
    k210config.positions = NULL;
 
    // initialize serial communication and serial task
-   serialInit();   
+   serialInit();
 
-   // retrieve the ai reading before shutdown
-   char_t* myVar;
-   bool_t res = nvsReadString(NVS_AI_VARIABLE_NAME, &myVar);
-   if (res) {
-      ESP_LOGI("NVS", "{%s = %s}", NVS_AI_VARIABLE_NAME, myVar);
-      free(myVar);
+   // retrieve last configuration and reading if possible
+   aiRetrieveState();   
+}
+
+// ********************************************************************************************
+
+void aiRetrieveState()
+{
+   char_t* data;
+   bool_t result = nvsReadString(NVS_AI_CONFIG_VAR_NAME, &data);
+   if (!result) return;
+
+   result = parseConfigs(data);
+   if (result) {
+      while (uartBusy) {
+         ESP_LOGE("Init", "unexpected usage on uart!");
+         vTaskDelay(200 / portTICK_PERIOD_MS);
+      }
+      uartBusy = TRUE;
+      isConfigured = sendConfigToK210();
+      uartBusy = FALSE;
+   }
+   free(data);
+
+   if (!isConfigured) {
+      ESP_LOGI("Init", "failed to configure k210!");
+      return;
+   }
+   ESP_LOGI("Init", "configured k210 successfully!");
+
+   readingValid = nvsReadString(NVS_AI_RESULT_VAR_NAME, &aiReading);
+   if (!readingValid) return;
+
+   if (strlen(aiReading) != k210config.digitCount) {
+      ESP_LOGI("Init", "retrieved AI-reading doesn't match the config!");
+      free(aiReading);
+      readingValid = FALSE;
+      return;
+   }
+
+   ESP_LOGI("NVS", "{%s = %s}", NVS_AI_RESULT_VAR_NAME, aiReading);
+   ESP_LOGI("Init", "retrieved last reading successfully!");
+}
+
+// ai task always running to keep the AI reading updated
+void aiTask(void *pvParameters)
+{
+   while(1) {
+      vTaskDelay(5000 / portTICK_PERIOD_MS);
+      if (!isConfigured) continue;
+
+      if (!readingValid) {
+         free(aiReading);
+         aiReading = (char_t*) malloc(k210config.digitCount);
+      }
+
+      readingValid = getAiHelper(aiReading);
+      if(readingValid) {
+         ESP_LOGI("aiTask", "got current AI-reading successfully!");
+      }
+      else ESP_LOGI("aiTask", "couldn't get AI-reading!");
    }
 }
 
@@ -178,18 +253,21 @@ error_t configHandler(HttpConnection* connection)
       httpReadStream(connection, data, 499, &length, 0);
       data[length] = 0;
       parsingResult = parseConfigs(data);
-      free(data);
    }
    else ESP_LOGE("API", "Config Parser couldn't allocate memory!");
 
    if (parsingResult)
    {
       sendConfigToK210();
-      uartBusy = FALSE;
-      return apiSendSuccessManual(connection, "Configs Recieved!");
+      nvsSaveString(NVS_AI_CONFIG_VAR_NAME, data);
    }
 
+   free(data);
    uartBusy = FALSE;
+
+   if (parsingResult)
+      return apiSendSuccessManual(connection, "Configs Recieved!");
+
    return apiSendRejectionManual(connection);
 }
 
@@ -345,6 +423,52 @@ bool_t checkAiResponseHelper()
 }
 
 /**
+ * requests and recieves the AI reading over uart communication
+ * it does not handle 'uartBusy' flag!
+ */
+bool_t getAiHelper_unsafe(char_t* res)
+{
+   uint8_t* buffer = uartGetBuffer();
+
+   vTaskDelay(100 / portTICK_PERIOD_MS);
+   uartSendBytes("AIread:1", 8);
+   vTaskDelay(400 / portTICK_PERIOD_MS);
+
+   uartClearBuffer();
+   uartSendBytes("AIsend:1", 8);
+   if (!waitForBuffer(5 + k210config.digitCount, 10)) {
+      ESP_LOGI("API", "K210 seems to be off! exiting the task ...");
+      return FALSE;
+   }
+
+   buffer[5 + k210config.digitCount] = 0;
+   ESP_LOGI("UART", "recieved '%s'", (char_t*)buffer);
+   if (checkAiResponseHelper()) {
+      ESP_LOGE("UART", "k210 sent invalid response for ai request");
+      return FALSE;
+   }
+
+   strncpy(res, (char_t*)(buffer+4), k210config.digitCount);
+   res[k210config.digitCount] = '\0';
+   return TRUE;
+}
+
+/**
+ * requests and recieves the AI reading over uart communication
+ * handles'uartBusy' flag properly
+ */
+bool_t getAiHelper(char_t* res)
+{
+   if (uartBusy) return FALSE;
+
+   uartBusy = TRUE;
+   bool_t flag = getAiHelper_unsafe(res);
+
+   uartBusy = FALSE;
+   return flag;
+}
+
+/**
  * handler function for serving the ai results
  * 
  * this function will request the ai result from k210
@@ -359,34 +483,13 @@ error_t getAIHandler(HttpConnection* connection)
    if (uartBusy)
       return apiSendRejectionManual(connection);
 
-   uartBusy = TRUE;
-   uint8_t* buffer = uartGetBuffer();
-
-   vTaskDelay(100 / portTICK_PERIOD_MS);
-   uartSendBytes("AIread:1", 8);
-   vTaskDelay(400 / portTICK_PERIOD_MS);
-
-   uartClearBuffer();
-   uartSendBytes("AIsend:1", 8);
-   if (!waitForBuffer(5 + k210config.digitCount, 10)) {
-      ESP_LOGI("API", "K210 seems to be off! exiting the task ...");
-      uartBusy = FALSE;
-      return apiSendRejectionManual(connection);
-   }
-
-   buffer[5 + k210config.digitCount] = 0;
-   ESP_LOGI("UART", "recieved '%s'", (char_t*)buffer);
-   if (checkAiResponseHelper()) {
-      ESP_LOGE("UART", "k210 sent invalid response for ai request");
-      uartBusy = FALSE;
-      return apiSendRejectionManual(connection);
-   }
 
    char_t tmp[11];
-   strncpy(tmp, (char_t*)(buffer+4), k210config.digitCount);
-   tmp[k210config.digitCount] = '\0';
+   bool_t res = getAiHelper(tmp);
 
-   uartBusy = FALSE;
+   if (!res)
+      return apiSendRejectionManual(connection);
+
    return apiSendSuccessManual(connection, tmp);
 }
 
