@@ -100,7 +100,7 @@
 #define DHCP_SERVER_SUPPORT ENABLED
 
 //IPv6 support
-#define IPV6_SUPPORT ENABLED
+#define IPV6_SUPPORT DISABLED // I disabled IPV6 support
 //Size of the IPv6 multicast filter
 #define IPV6_MULTICAST_FILTER_SIZE 8
 

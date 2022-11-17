@@ -517,8 +517,13 @@ error_t wifiApInterfaceInit(void)
    error_t error;
    NetInterface *interface;
    MacAddr macAddr;
+
+#if (IPV4_SUPPORT == ENABLED)
    Ipv4Addr ipv4Addr;
+#endif
+#if (IPV6_SUPPORT == ENABLED)
    Ipv6Addr ipv6Addr;
+#endif
 
    //Configure the third network interface (Wi-Fi AP mode)
    interface = &netInterface[2];

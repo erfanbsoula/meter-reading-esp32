@@ -58,7 +58,7 @@ error_t mqttConnect(void)
       "offline", 7, MQTT_QOS_LEVEL_0, FALSE);
 
    //Debug message
-   ESP_LOGE("mqtt", "Connecting to MQTT server %s...\n", ipAddrToString(&ipAddr, NULL));
+   ESP_LOGI("mqtt", "Connecting to MQTT server %s...", ipAddrToString(&ipAddr, NULL));
 
    //Start of exception handling block
    do
