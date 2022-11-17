@@ -50,7 +50,7 @@
 
 //Ethernet interface configuration
 #define APP_IF0_NAME "eth0"
-#define APP_IF0_HOST_NAME "http-server-demo"
+#define APP_IF0_HOST_NAME "http-server"
 #define APP_IF0_MAC_ADDR "00-AB-CD-EF-32-00"
 
 #define APP_IF0_USE_DHCP_CLIENT ENABLED
@@ -65,7 +65,7 @@
 
 //First Wi-Fi interface (STA mode) configuration
 #define APP_IF1_NAME "wlan0"
-#define APP_IF1_HOST_NAME "http-server-demo"
+#define APP_IF1_HOST_NAME "http-server"
 #define APP_IF1_MAC_ADDR "00-00-00-00-00-00"
 
 #define APP_IF1_USE_DHCP_CLIENT ENABLED
@@ -99,8 +99,8 @@
 #define APP_IF2_IPV6_GLOBAL_ADDR "fd00:1:2:3::32:2"
 
 //Wi-Fi parameters (STA mode)
-#define APP_WIFI_STA_SSID "TEST_ESP32_STA"
-#define APP_WIFI_STA_PASSWORD "12345678"
+#define APP_WIFI_STA_SSID "IBMCO_Official_plus"
+#define APP_WIFI_STA_PASSWORD "@88281228@ibmco"
 
 //Wi-Fi parameters (AP mode)
 #define APP_WIFI_AP_SSID "TEST_ESP32_AP"
@@ -502,6 +502,8 @@ error_t wifiStaInterfaceInit(void)
 #endif
 
    //Successful initialization
+   ESP_LOGI("wifi", "connected succesfully!");
+   netSetLinkState(interface, NIC_LINK_STATE_UP);
    return NO_ERROR;
 }
 

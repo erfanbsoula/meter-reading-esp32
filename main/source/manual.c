@@ -3,6 +3,7 @@
 #include "httpHelper.h"
 #include "uartHelper.h"
 #include "myNVS.h"
+#include "myMqtt.h"
 
 // ********************************************************************************************
 
@@ -65,6 +66,13 @@ void initManual()
    if(ret != pdPASS) { // error check
       ESP_LOGE("aiTask","failed to create task!");
    }
+
+   ret = xTaskCreatePinnedToCore(
+      mqttTask, "mqttTask", 2048, NULL, 12, NULL, 1
+   );
+   if(ret != pdPASS) { // error check
+      ESP_LOGE("mqttTask","failed to create task!");
+   }
 }
 
 // ********************************************************************************************
@@ -79,7 +87,7 @@ void aiRetrieveState()
    if (result) {
       while (uartBusy) {
          ESP_LOGE("Init", "unexpected usage on uart!");
-         vTaskDelay(200 / portTICK_PERIOD_MS);
+         vTaskDelay(2000 / portTICK_PERIOD_MS);
       }
       uartBusy = TRUE;
       isConfigured = sendConfigToK210();

@@ -21,29 +21,14 @@ set(COMPONENT_SRCDIRS "."
 	"cyclone_tcp/mqtt"
 	"cyclone_tcp/netbios"
 	"cyclone_tcp/ppp"
-	"cyclone_tcp/snmp"
 	"cyclone_tcp/web_socket"
-	"cyclone_ssl"
-	"cyclone_crypto/aead"
-	"cyclone_crypto/cipher"
-	"cyclone_crypto/cipher_mode"
-	"cyclone_crypto/core"
-	"cyclone_crypto/ecc"
-	"cyclone_crypto/encoding"
-	"cyclone_crypto/hardware/esp32"
-	"cyclone_crypto/hash"
-	"cyclone_crypto/kdf"
-	"cyclone_crypto/mac"
-	"cyclone_crypto/mpi"
-	"cyclone_crypto/pkc"
-	"cyclone_crypto/pkix"
-	"cyclone_crypto/rng"
-	"cyclone_crypto/xof")
+	"cyclone_crypto/core")
 
 set(COMPONENT_ADD_INCLUDEDIRS "."
 	"common"
 	"cyclone_tcp"
 	"cyclone_ssl"
-	"cyclone_crypto")
+	"cyclone_crypto"
+)
 
 register_component()

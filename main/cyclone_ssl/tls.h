@@ -78,6 +78,8 @@ struct _TlsEncryptionEngine;
  * #define GPL_LICENSE_TERMS_ACCEPTED
  */
 
+#define GPL_LICENSE_TERMS_ACCEPTED
+
 #ifndef GPL_LICENSE_TERMS_ACCEPTED
    #error Before compiling CycloneSSL Open, you must accept the terms of the GPL license
 #endif
