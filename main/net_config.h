@@ -163,4 +163,7 @@
 //Server Side Includes support
 #define HTTP_SERVER_SSI_SUPPORT ENABLED
 
+// enable cookie support
+#define HTTP_SERVER_COOKIE_SUPPORT ENABLED
+
 #endif

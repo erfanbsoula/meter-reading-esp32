@@ -22,13 +22,11 @@ set(COMPONENT_SRCDIRS "."
 	"cyclone_tcp/netbios"
 	"cyclone_tcp/ppp"
 	"cyclone_tcp/web_socket"
-	"cyclone_crypto/core")
+)
 
 set(COMPONENT_ADD_INCLUDEDIRS "."
 	"common"
 	"cyclone_tcp"
-	"cyclone_ssl"
-	"cyclone_crypto"
 )
 
 register_component()

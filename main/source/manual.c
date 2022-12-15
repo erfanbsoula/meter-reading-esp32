@@ -4,6 +4,7 @@
 #include "uartHelper.h"
 #include "myNVS.h"
 #include "myMqtt.h"
+#include "session.h"
 
 // ********************************************************************************************
 
@@ -59,6 +60,8 @@ void initManual()
    // retrieve last configuration and reading if possible
    aiRetrieveState();
 
+   initSessionHandler();
+
    // initialize Serial Event Task
    BaseType_t ret = xTaskCreatePinnedToCore(
       aiTask, "aiTask", 2048, NULL, 12, NULL, 1
@@ -67,6 +70,7 @@ void initManual()
       ESP_LOGE("aiTask","failed to create task!");
    }
 
+   // initialize mqtt task
    ret = xTaskCreatePinnedToCore(
       mqttTask, "mqttTask", 2048, NULL, 12, NULL, 1
    );
@@ -527,6 +531,14 @@ error_t getAIHandler(HttpConnection* connection)
  */
 error_t httpServerManualRouter(HttpConnection *connection, const char_t *uri)
 {
+   ESP_LOGI("COOKIE", "%s", connection->request.cookie);
+   if(hasLoggedIn(connection))
+      ESP_LOGI("session", "LoggedIn!");
+   else {
+      logIn(connection);
+      ESP_LOGI("session", "not LoggedIn!");
+   }
+
    if (!strcmp(uri, "/config"))
       return configHandler(connection);
 

@@ -30,6 +30,7 @@
 #include "freertos/task.h"
 #include "freertos/queue.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "cJSON.h"
