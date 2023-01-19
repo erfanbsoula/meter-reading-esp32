@@ -33,6 +33,4 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "cJSON.h"
-
 #endif
