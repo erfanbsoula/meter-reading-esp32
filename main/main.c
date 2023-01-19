@@ -45,7 +45,7 @@
 #include "resource_manager.h"
 #include "debug.h"
 
-#include "source/manual.h"
+#include "source/source.h"
 #include "esp_log.h"
 
 //Ethernet interface configuration

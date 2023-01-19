@@ -29,6 +29,7 @@ void serialEventTask(void *pvParameters);
 
 // ********************************************************************************************
 // UART initialization
+
 void serialInit()
 {
 	ESP_LOGI(MY_UART_TAG, "initializing serial communication!");
@@ -68,6 +69,7 @@ void serialInit()
 }
 
 // ********************************************************************************************
+
 // this task will be pinned to the core1 and will always be running
 // **! you don't need to change this task in order to intract with UART !**
 void serialEventTask(void *pvParameters)

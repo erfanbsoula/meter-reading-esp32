@@ -2,20 +2,20 @@
 #include "session.h"
 #include "esp_random.h"
 
-void getRandomStr(char_t* output, int len)
+char_t sessions_ring[MAX_SESSION_COUNT][SESSION_ID_LENGTH+1];
+int ringPointer = 0;
+
+void getRandomStr(char_t *output, int len)
 {
     static const char_t eligible_chars[] =
         "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    static const size_t eligible_len = sizeof(eligible_chars);
+    static const size_t pool_len = sizeof(eligible_chars);
 
     for(int i = 0; i < len; i++){
         uint32_t rand_int = (uint32_t) esp_random();
-        output[i] = eligible_chars[rand_int % eligible_len];
+        output[i] = eligible_chars[rand_int % pool_len];
     }
 }
-
-char_t sessions_ring[MAX_SESSION_COUNT][SESSION_ID_LENGTH+1];
-int ringPointer = 0;
 
 void initSessionHandler()
 {

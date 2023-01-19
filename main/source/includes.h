@@ -35,17 +35,4 @@
 
 #include "cJSON.h"
 
-typedef struct {
-    uint_t x;
-    uint_t y;
-    uint_t width;
-    uint_t height;
-} Position;
-
-typedef struct {
-    uint_t digitCount;
-    bool_t invert;
-    Position *positions;
-} K210config;
-
 #endif
