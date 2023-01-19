@@ -2,8 +2,10 @@
 #include "httpHelper.h"
 
 // ********************************************************************************************
-// send header helper functions
 
+/**
+ * send http response header to the client
+ */
 error_t httpSendHeaderManual(HttpConnection* connection,
    uint_t statusCode, char_t* contentType, size_t length)
 {
@@ -21,11 +23,13 @@ error_t httpSendHeaderManual(HttpConnection* connection,
 
 // ********************************************************************************************
 
-// this function doesn't free the message buffer after snding it
-// if used with strings allocated on the heap, buffer must be manually freed
-
-// **! message is expected to be null-terminated !**
-
+/**
+ * send message buffer to client
+ * and safely close the connection
+ * 
+ * ! message is expected to be null-terminated !
+ * doesn't free the message buffer after snding it
+ */
 error_t httpSendManual(HttpConnection* connection,
    int32_t statusCode, char_t* contentType, char_t* message)
 {
@@ -47,12 +51,13 @@ error_t httpSendManual(HttpConnection* connection,
 
 // ********************************************************************************************
 
-// this function will free the message buffer after sending the response
-// can be safely used with strings allocated on the heap
-// you wont be able to use the message buffer after calling this function
-
-// **! message is expected to be null-terminated !**
-
+/**
+ * send message buffer to client and free the message buffer
+ * then safely close the http connection
+ * 
+ * ! message is expected to be null-terminated !
+ * message buffer won't be accessable after calling this function
+ */
 error_t httpSendAndFreeManual(HttpConnection* connection,
    int32_t statusCode, char_t* contentType, char_t* message)
 {
@@ -65,11 +70,14 @@ error_t httpSendAndFreeManual(HttpConnection* connection,
 
 // ********************************************************************************************
 
-// this function doesn't free the message buffer after snding it
-// if used with strings allocated on the heap, buffer must be manually freed
-
-// **! message is expected to be null-terminated !**
-
+/**
+ * send message buffer to client
+ * set content-type to json
+ * then safely close the http connection
+ * 
+ * ! message is expected to be null-terminated !
+ * doesn't free the message buffer after snding it
+ */
 error_t httpSendJsonManual(HttpConnection* connection,
    int32_t statusCode, char_t* message)
 {
@@ -80,12 +88,14 @@ error_t httpSendJsonManual(HttpConnection* connection,
 
 // ********************************************************************************************
 
-// this function will free the message buffer after sending the response
-// can be safely used with strings allocated on the heap
-// you wont be able to use the message buffer after calling this function
-
-// **! message is expected to be null-terminated !**
-
+/**
+ * send message buffer to client and free the message buffer
+ * set content-type to json
+ * then safely close the http connection
+ * 
+ * ! message is expected to be null-terminated !
+ * message buffer won't be accessable after calling this function
+ */
 error_t httpSendJsonAndFreeManual(HttpConnection* connection,
    int32_t statusCode, char_t* message)
 {
@@ -98,9 +108,11 @@ error_t httpSendJsonAndFreeManual(HttpConnection* connection,
 
 // ********************************************************************************************
 
-// this helper function will send api rejection message in json format
-// with a "Bad Request" status code and safely close the http connection
-
+/**
+ * send rejection message to client in json format
+ * with a "Bad Request" status code
+ * then safely close the http connection
+ */
 error_t apiSendRejectionManual(HttpConnection* connection)
 {
    cJSON* res = cJSON_CreateObject();
@@ -118,11 +130,13 @@ error_t apiSendRejectionManual(HttpConnection* connection)
 
 // ********************************************************************************************
 
-// this helper function will send api rejection message in json format
-// with a "Bad Request" status code and safely close the http connection
-
-// **! message is expected to be null-terminated !**
-
+/**
+ * send message to client in json format
+ * with a "HTTP OK" status code
+ * then safely close the http connection
+ * 
+ * ! message is expected to be null-terminated !
+ */
 error_t apiSendSuccessManual(HttpConnection* connection, char_t* message)
 {
    cJSON* res = cJSON_CreateObject();
