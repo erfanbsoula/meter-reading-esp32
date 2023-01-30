@@ -4,8 +4,12 @@
 // ! supports maximum 10 users !
 #define USER_COUNT 2
 
+// warning!
+// sessionId length must be less than or equal to 32
+#define SESSION_ID_LENGTH 16
+
 typedef struct _Position Position;
-typedef struct _K210config K210config;
+typedef struct _ImgConfig ImgConfig;
 typedef struct _User User;
 typedef struct _Environment Environment;
 
@@ -17,7 +21,7 @@ struct _Position
    uint_t height;
 };
 
-struct _K210config
+struct _ImgConfig
 {
    bool_t invert;
    uint_t digitCount;
@@ -29,12 +33,13 @@ struct _User
 {
    char_t *username;
    char_t *password;
+   char_t sessionId[SESSION_ID_LENGTH+1];
 };
 
 struct _Environment
 {
    User users[USER_COUNT];
-   K210config k210config;
+   ImgConfig imgConfig;
    char_t *aiReading;
 };
 

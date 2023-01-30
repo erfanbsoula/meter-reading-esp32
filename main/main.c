@@ -152,15 +152,7 @@ void app_main(void)
    //Configure debug UART
    debugInit(115200);
 
-   //Start-up message
-   TRACE_INFO("\r\n");
-   TRACE_INFO("***********************************\r\n");
-   TRACE_INFO("*** CycloneTCP HTTP Server Demo ***\r\n");
-   TRACE_INFO("***********************************\r\n");
-   TRACE_INFO("Copyright: 2010-2022 Oryx Embedded SARL\r\n");
    TRACE_INFO("Compiled: %s %s\r\n", __DATE__, __TIME__);
-   TRACE_INFO("Target: ESP32\r\n");
-   TRACE_INFO("\r\n");
 
    //Initialize NVS memory
    esp_err_t err = nvs_flash_init();
