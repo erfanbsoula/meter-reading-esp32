@@ -30,17 +30,6 @@
 
 Environment myEnv;
 
-/**
- * in each callback function that wants to use the UART serial communication with k210,
- * check this flag and if set, return immediately.
- * 
- * if not set, you must set the flag at the beginning of the process
- * and unset the flag after the process is done.
- * 
- * **! remember to unset the flag in case of process termination due to errors !**
- */
-bool_t uartBusy = FALSE;
-
 // will hold the AI-reading result recieved from k210
 char_t *aiReading;
 bool_t readingValid = FALSE;

@@ -1,5 +1,6 @@
 #include "includes.h"
 #include "uartHelper.h"
+#include "freertos/semphr.h"
 
 // ********************************************************************************************
 
@@ -13,6 +14,12 @@
 #define RD_BUF_SIZE (UART_BUF_SIZE)
 static QueueHandle_t myQueue;
 
+#define WAIT_FOR_EVENT_MS 10000
+#define WAIT_FOR_DATA_MS 200
+
+#define WAIT_FOR_EVENT_TICKS (WAIT_FOR_EVENT_MS / portTICK_PERIOD_MS)
+#define WAIT_FOR_DATA_TICKS (WAIT_FOR_DATA_MS / portTICK_PERIOD_MS)
+
 // this size will be actually allocated and used as the serial buffer:
 // **! make sure you have enough free memory. if not, change the BUFFER_SIZE !**
 #define ACTUAL_BUF_SIZE (BUFFER_SIZE + 1024)
@@ -24,6 +31,14 @@ uint8_t* buffer;
 
 // this will show the number of bytes recieved by the UART event handler:
 size_t in_buf_len = 0;
+
+/**
+ * every function that wants to use the UART serial communication,
+ * must acquire this lock and release it after the process is done.
+ * 
+ * remember to release the lock in case of process termination due to errors!
+ */
+SemaphoreHandle_t mutexLock;
 
 void serialEventTask(void *pvParameters);
 
@@ -66,6 +81,9 @@ void serialInit()
    if(ret != pdPASS) { // error check
       ESP_LOGE(MY_UART_TAG,"failed to create serial event task!");
    }
+
+   mutexLock = xSemaphoreCreateMutex();
+   xSemaphoreGive(mutexLock);
 }
 
 // ********************************************************************************************
@@ -88,12 +106,13 @@ void serialEventTask(void *pvParameters)
    size_t buffered_size;
 
    while(1) {
-      if(xQueueReceive(myQueue, (void*) &event, (portTickType)portMAX_DELAY))
+      if(xQueueReceive(myQueue, (void*) &event, WAIT_FOR_EVENT_TICKS))
       {
          switch(event.type)
          {
             case UART_DATA:
-               uart_read_bytes(MY_UART, buffer+in_buf_len, event.size, 20);
+               uart_read_bytes(
+                  MY_UART, buffer+in_buf_len, event.size, WAIT_FOR_DATA_TICKS);
                in_buf_len += event.size;
                break;
             // **************************************************
@@ -143,9 +162,57 @@ void serialEventTask(void *pvParameters)
 
 // ********************************************************************************************
 
-uint8_t* uartGetBuffer() { return buffer; }
-size_t uartGetBufLength() { return in_buf_len; }
+bool_t uartAcquire(uint_t waitTimeMS)
+{
+   TickType_t waitTicks = waitTimeMS / portTICK_PERIOD_MS;
+   return xSemaphoreTake(mutexLock, waitTicks) == pdTRUE;
+}
+
+void uartRelease() { xSemaphoreGive(mutexLock); }
+
 void uartClearBuffer() { in_buf_len = 0; }
+size_t uartGetBufLength() { return in_buf_len; }
+uint8_t* uartGetBuffer() { return buffer; }
+
+/**
+ * waits until the size of the recieved data in the buffer
+ * matches the chunkSize parameter and returns a TRUE value
+ * indicating success.
+ * 
+ * if filling the buffer takes longer than waitTimeMS,
+ * function will return a FALSE value indicating failure.
+ */
+bool_t waitForBuffer(size_t chunkSize, uint_t waitTimeMS)
+{
+   uint_t waitCount = waitTimeMS / portTICK_PERIOD_MS;
+   uint_t counter = 0;
+   while (in_buf_len < chunkSize) {
+      if (waitCount < counter) {
+         return FALSE;
+      }
+      vTaskDelay(1);
+      counter += 1;
+   }
+   return TRUE;
+}
+
+/**
+ * waits until the size of the recieved data in the buffer
+ * matches the chunkSize parameter and returns a pointer
+ * to the begining of the buffer.
+ * 
+ * if filling the buffer takes longer than waitTimeMS,
+ * function will return a Null value indicating failure.
+ * 
+ * don't free the buffer retuned by this function!
+ */
+uint8_t* uartReadBytesSync(size_t chunkSize, uint_t waitTimeMS)
+{
+   if (waitForBuffer(chunkSize, waitTimeMS))
+      return buffer;
+
+   return NULL;
+}
 
 // wrapper for sending bytes
 void uartSendBytes(const void* data, size_t size)
@@ -157,30 +224,4 @@ void uartSendBytes(const void* data, size_t size)
 void uartSendString(const char_t* str)
 {
    uart_write_bytes(MY_UART, str, strlen(str));
-}
-
-/**
- * waits until the size of the recieved data in the buffer
- * matches the chunkSize parameter.
- * 
- * waitCount is the number of 100ms periods that the function
- * will wait for the data.
- * 
- * if filling the buffer takes longer than (waitCount*100)ms,
- * function will return a false value indicating failure.
- * 
- * otherwise, function will return a true value indicating
- * that the data is ready in the buffer.
- */
-bool_t waitForBuffer(size_t chunkSize, uint_t waitCount)
-{
-   uint_t counter = 0;
-   while (in_buf_len < chunkSize) {
-      if (waitCount < counter) {
-         return FALSE;
-      }
-      vTaskDelay(100 / portTICK_PERIOD_MS);
-      counter += 1;
-   }
-   return TRUE;
 }

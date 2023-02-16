@@ -72,7 +72,7 @@ bool_t fillPositionArray(ImgConfig *imgConfig, cJSON *arrNode)
 
    // allocate memory to store new digit-positions
    size_t size = sizeof(Position) * imgConfig->digitCount;
-   imgConfig->positions = (Position*) malloc (size);
+   imgConfig->positions = (Position*) malloc(size);
 
    if (imgConfig->positions == NULL)
    {
@@ -80,7 +80,7 @@ bool_t fillPositionArray(ImgConfig *imgConfig, cJSON *arrNode)
       return FALSE;
    }
 
-   // loop throw each digit's position property
+   // loop through each digit's position property
    for (int_t i = 0; i < imgConfig->digitCount; i++)
    {
       // get the (i)th digit's position property
