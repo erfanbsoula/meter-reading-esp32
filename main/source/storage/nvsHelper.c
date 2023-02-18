@@ -8,9 +8,9 @@
 // forward declaration of functions
 
 nvs_handle_t nvsStart();
-bool_t nvsSaveString(char_t* varName, char_t* varValue);
-bool_t nvsReadString(char_t* varName, char_t** varValue);
-char_t* allocateStringMem(nvs_handle_t nvsHandle, char_t* varName);
+bool_t nvsSaveString(char_t *varName, char_t *varValue);
+bool_t nvsReadString(char_t *varName, char_t **varValue);
+char_t* allocateStringMem(nvs_handle_t nvsHandle, char_t *varName);
 bool_t nvsFinish(nvs_handle_t nvsHandle);
 
 // ********************************************************************************************
@@ -41,7 +41,7 @@ nvs_handle_t nvsStart()
  * saves the string as a key-value pair varName:varValue in NVS.
  * varValue can be accessed using the varName key.
  */
-bool_t nvsSaveString(char_t* varName, char_t* varValue)
+bool_t nvsSaveString(char_t *varName, char_t *varValue)
 {
    nvs_handle_t nvsHandle = nvsStart();
    if (!nvsHandle)

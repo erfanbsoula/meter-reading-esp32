@@ -1,10 +1,11 @@
 #include "../includes.h"
-#include "aiConfigParser.h"
+#include "imgConfigParser.h"
 #include "cJSON.h"
 
 // ********************************************************************************************
 // forward declaration of functions
 
+bool_t parseImgConfig(ImgConfig *imgConfig, char_t *data);
 bool_t parseHelper(ImgConfig *imgConfig, cJSON *root);
 bool_t fillAttributes(ImgConfig *imgConfig, cJSON *root);
 bool_t fillPositionArray(ImgConfig *imgConfig, cJSON *arrNode);
@@ -16,7 +17,7 @@ bool_t extractPosition(Position *position, cJSON *child);
  * parse the configuration data stored as json string
  * and fill 'imgConfig' with the result
  */
-bool_t parseImgConfigs(ImgConfig *imgConfig, char_t *data)
+bool_t parseImgConfig(ImgConfig *imgConfig, char_t *data)
 {
    cJSON* root = cJSON_Parse(data);
    if (root == NULL)

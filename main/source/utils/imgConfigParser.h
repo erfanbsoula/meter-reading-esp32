@@ -3,6 +3,6 @@
 
 #include "../manual.h"
 
-bool_t parseImgConfigs(ImgConfig *imgConfig, char_t *data);
+bool_t parseImgConfig(ImgConfig *imgConfig, char_t *data);
 
 #endif

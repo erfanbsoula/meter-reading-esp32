@@ -40,7 +40,7 @@ struct _Environment
 {
    User users[USER_COUNT];
    ImgConfig imgConfig;
-   char_t *aiReading;
+   char_t *meterCounter;
 };
 
 #endif

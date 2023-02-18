@@ -16,14 +16,7 @@
 // automatic reading
 #define AUTOMATED_READING DISABLED
 
-// NVS variable names
-#define NVS_imgConfig_VAR "imgConfig"
-#define NVS_aiReading_VAR "aiReading"
-#define NVS_username_VAR "username#"
-#define NVS_password_VAR "password#"
 
-#define DEFAULT_USERNAME "admin#"
-#define DEFAULT_PASSWORD "12345678"
 
 // ********************************************************************************************
 // Global Variables
