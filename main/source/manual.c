@@ -1,6 +1,8 @@
 #include "includes.h"
 #include "source.h"
 #include "manual.h"
+#include "storage/storage.h"
+
 #include "httpHelper.h"
 #include "uartHelper.h"
 #include "nvsHelper.h"
@@ -8,31 +10,21 @@
 #include "session.h"
 #include "cJSON.h"
 
-// ********************************************************************************************
-
 // number of bytes to expect when requesing image
 #define TOTAL_SIZE 76800
 
 // automatic reading
 #define AUTOMATED_READING DISABLED
 
-
-
 // ********************************************************************************************
 // Global Variables
 
-Environment myEnv;
-
-// will hold the AI-reading result recieved from k210
-char_t *aiReading;
-bool_t readingValid = FALSE;
+Environment appEnv;
 
 // ********************************************************************************************
 // forward declaration of functions
 
-void initEnvironment();
 void aiTask(void *pvParameters);
-bool_t parseK210Configs(K210config *k210config, char_t *data);
 bool_t sendConfigToK210();
 bool_t getAiHelper(char_t* res);
 
@@ -43,8 +35,7 @@ void initManual()
    // initialize serial communication and serial task
    serialInit();
 
-   // initilize myEnv object
-   initEnvironment();
+   retrieveEnvironment(&appEnv);
 
    initSessionHandler();
    esp_timer_get_time();
@@ -67,20 +58,7 @@ void initManual()
 }
 
 // ********************************************************************************************
-void retrieveUsers();
 void k210StartupConfig();
-
-/**
- * initialize global Environment object 'myEnv' on startup
- */
-void initEnvironment()
-{
-   // k210 is not configured on startup
-   myEnv.imgConfig.isConfigured = FALSE;
-   myEnv.k210config.positions = NULL;
-
-   
-}
 
 // handle this function later
 void k210StartupConfig()

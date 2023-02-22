@@ -1,5 +1,4 @@
 #include "../includes.h"
-#include "../manual.h"
 #include "../utils/imgConfigParser.h"
 #include "storage.h"
 #include "nvsHelper.h"
@@ -86,6 +85,7 @@ void setDefaultUser(User *user, uint_t indx,
 void retrieveImgConfig(ImgConfig *imgConfig)
 {
    imgConfig->isConfigured = false;
+   imgConfig->positions = NULL;
 
    char_t *data;
    bool_t result = nvsReadString(NVS_imgConfig_VAR, &data);
