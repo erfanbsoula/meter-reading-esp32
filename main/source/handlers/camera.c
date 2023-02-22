@@ -1,5 +1,5 @@
 #include "../includes.h"
-#include "camera.h"
+#include "handlers.h"
 
 /**
  * handler function for serving the camera image over a manual api.

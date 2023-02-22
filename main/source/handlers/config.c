@@ -1,5 +1,5 @@
 #include "../includes.h"
-#include "config.h"
+#include "handlers.h"
 
 /**
  * handler function for parsing the incoming post requests

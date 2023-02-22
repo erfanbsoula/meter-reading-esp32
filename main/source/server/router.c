@@ -4,7 +4,12 @@
 #include "session.h"
 
 // ********************************************************************************************
-// functions pre declaration
+// Global Variables
+
+// ********************************************************************************************
+// forward declaration of functions
+
+error_t httpServerManualRouter(HttpConnection *connection, const char_t *uri);
 error_t routerHelper(HttpConnection *connection, const char_t *uri);
 
 // ********************************************************************************************
