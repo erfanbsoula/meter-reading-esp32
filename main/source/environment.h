@@ -1,5 +1,5 @@
-#ifndef __MANUAL_H__
-#define __MANUAL_H__
+#ifndef __ENVIRONMENT_H__
+#define __ENVIRONMENT_H__
 
 // ! supports maximum 10 users !
 #define USER_COUNT 2
@@ -12,6 +12,8 @@ typedef struct _Position Position;
 typedef struct _ImgConfig ImgConfig;
 typedef struct _User User;
 typedef struct _Environment Environment;
+
+extern Environment appEnv;
 
 struct _Position
 {

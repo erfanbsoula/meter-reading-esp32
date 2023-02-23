@@ -1,27 +1,29 @@
 #include "../includes.h"
 #include "session.h"
-#include "esp_random.h"
 #include "httpHelper.h"
+#include "esp_random.h"
 
 #define READ_STREAM_BUF_SIZE 64
 
-// stores a pointer to the users array for easier access
-static User *users = NULL;
+static const char_t *LOG_TAG = "session";
 
 // ********************************************************************************************
-// functions pre declaration
-error_t login(User *user, HttpConnection *connection);
+// forward declaration of functions
+
+void initSessionHandler();
+error_t loginHandler(HttpConnection *connection);
+error_t login(HttpConnection *connection, User *user);
+User* findLoggedInUser(HttpConnection *connection);
+User* findUser(char_t *username, char_t *password);
 void getRandomStr(char_t *output, int len);
 char_t* parseFormField(char_t **dataPointer, char_t *field);
-User* findUser(char_t *username, char_t *password);
 
 // ********************************************************************************************
 
-void initSessionHandler(User *users_)
+void initSessionHandler()
 {
-   users = users_;
    for (int i = 0; i < USER_COUNT; i++) {
-      users[i].sessionId[0] = '\0';
+      appEnv.users[i].sessionId[0] = '\0';
    }
 }
 
@@ -29,9 +31,9 @@ void initSessionHandler(User *users_)
 
 error_t loginHandler(HttpConnection *connection)
 {
-   char_t* data = (char_t*) malloc(READ_STREAM_BUF_SIZE+1);
+   char_t *data = (char_t*) malloc(READ_STREAM_BUF_SIZE+1);
    if (!data) {
-      ESP_LOGE("API", "login handler couldn't allocate memory!");
+      ESP_LOGE(LOG_TAG, "loginHandler couldn't allocate memory!");
       return httpSendManual(
          connection, 500, "text/plain", "something went wrong!");
    }
@@ -39,7 +41,7 @@ error_t loginHandler(HttpConnection *connection)
    size_t length = 0;
    httpReadStream(
       connection, data, READ_STREAM_BUF_SIZE, &length, 0);
-   data[length] = 0;
+   data[length] = '\0';
 
    char_t* tmp = data;
    char_t* username = parseFormField(&tmp, "username");
@@ -50,13 +52,13 @@ error_t loginHandler(HttpConnection *connection)
    free(username);
    free(password);
 
-   if (currentUser) return logIn(connection);
+   if (currentUser) return login(connection, currentUser);
    return apiSendRejectionManual(connection);
 }
 
 // ********************************************************************************************
 
-error_t login(User *user, HttpConnection *connection)
+error_t login(HttpConnection *connection, User *user)
 {
    getRandomStr(user->sessionId, SESSION_ID_LENGTH);
    user->sessionId[SESSION_ID_LENGTH] = 0;
@@ -71,16 +73,33 @@ error_t login(User *user, HttpConnection *connection)
 
 // ********************************************************************************************
 
-User* hasLoggedIn(HttpConnection *connection)
+User* findLoggedInUser(HttpConnection *connection)
 {
    char_t* sessionId = connection->request.cookie;
    if (!sessionId[0]) return NULL;
 
    for (int i = 0; i < USER_COUNT; i++) {
-      if (!strcmp(sessionId, users[i].sessionId))
-         return &users[i];
+      if (!strcmp(sessionId, appEnv.users[i].sessionId))
+         return &(appEnv.users[i]);
    }
 
+   return NULL;
+}
+
+// ********************************************************************************************
+
+User* findUser(char_t *username, char_t *password)
+{
+   for (int i = 0; i < USER_COUNT; i++)
+   {
+      if (!strcmp(username, appEnv.users[i].username))
+      {
+         if (!strcmp(password, appEnv.users[i].password))
+            return &(appEnv.users[i]);
+
+         return NULL;
+      }
+   }
    return NULL;
 }
 
@@ -127,23 +146,6 @@ char_t* parseFormField(char_t **dataPointer, char_t *field)
       *dataPointer += 1;
 
    return val;
-}
-
-// ********************************************************************************************
-
-User* findUser(char_t *username, char_t *password)
-{
-   for (int i = 0; i < USER_COUNT; i++)
-   {
-      if (!strcmp(username, users[i].username))
-      {
-         if (!strcmp(password, users[i].password))
-            return &users[i];
-
-         return NULL;
-      }
-   }
-   return NULL;
 }
 
 // ********************************************************************************************

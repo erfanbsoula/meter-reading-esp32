@@ -1,10 +1,10 @@
 #ifndef __SESSION_H__
 #define __SESSION_H__
 
-#include "../manual.h"
+#include "../environment.h"
 
-void initSessionHandler(User *users_);
+void initSessionHandler();
 error_t loginHandler(HttpConnection *connection);
-User* hasLoggedIn(HttpConnection *connection);
+User* findLoggedInUser(HttpConnection *connection);
 
 #endif

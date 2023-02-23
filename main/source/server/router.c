@@ -2,15 +2,16 @@
 #include "router.h"
 #include "httpHelper.h"
 #include "session.h"
-
-// ********************************************************************************************
-// Global Variables
+#include "../handlers/handlers.h"
 
 // ********************************************************************************************
 // forward declaration of functions
 
-error_t httpServerManualRouter(HttpConnection *connection, const char_t *uri);
-error_t routerHelper(HttpConnection *connection, const char_t *uri);
+error_t httpServerManualRouter(
+	HttpConnection *connection, const char_t *uri);
+
+error_t routerHelper(HttpConnection *connection,
+	const char_t *uri, User *currentUser);
 
 // ********************************************************************************************
 
@@ -30,8 +31,10 @@ error_t httpServerManualRouter(HttpConnection *connection, const char_t *uri)
 	if (!strcmp(uri, "/login"))
 		return loginHandler(connection);
 
+	User *currentUser = findLoggedInUser(connection);
+
 	// block request if not logged in
-	if (!hasLoggedIn(connection))
+	if (!currentUser)
 	{
 		connection->response.location = "/login.html";
 		error_t error = httpSendHeaderManual(connection, 302, NULL, 0);
@@ -39,12 +42,13 @@ error_t httpServerManualRouter(HttpConnection *connection, const char_t *uri)
 		return httpCloseStream(connection);
 	}
 
-	return routerHelper(connection, uri);
+	return routerHelper(connection, uri, currentUser);
 }
 
 // ********************************************************************************************
 
-error_t routerHelper(HttpConnection *connection, const char_t *uri)
+error_t routerHelper(HttpConnection *connection,
+	const char_t *uri, User *currentUser)
 {
     // use handler functions (API)
 	if (!strcmp(uri, "/config"))

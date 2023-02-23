@@ -2,9 +2,11 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DESP32_GATEWAY -D__error_t_defined")
 
 set(COMPONENT_SRCDIRS "."
 	"source"
-	"source/utils"
-	"source/http"
 	"source/handlers"
+	"source/serial"
+	"source/server"
+	"source/storage"
+	"source/utils"
 	"common"
 	"cyclone_tcp/core"
 	"cyclone_tcp/dhcp"

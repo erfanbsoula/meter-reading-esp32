@@ -1,44 +1,56 @@
 #include "../includes.h"
+#include "../environment.h"
 #include "handlers.h"
+#include "../serial/uartHelper.h"
+#include "../server/httpHelper.h"
+#include "../utils/imgConfigParser.h"
+
+static const uint_t READ_STREAM_BUF_SIZE = 511;
+static const char_t *LOG_TAG = "configHandler";
+
+// ********************************************************************************************
+// forward declaration of functions
+
+error_t configHandler(HttpConnection *connection);
+bool_t sendConfigToK210(ImgConfig *imgConfig);
+
+// ********************************************************************************************
 
 /**
  * handler function for parsing the incoming post requests
  * and extracting the config data
  * then sending it to the k210 over UART communication api
  */
-error_t configHandler(HttpConnection* connection)
+error_t configHandler(HttpConnection *connection)
 {
    if (strcmp(connection->request.method, "POST"))
       return ERROR_NOT_FOUND;
 
-   ESP_LOGI("API", "configs post request recieved!");
-
-   if (uartBusy)
+   if (!uartAcquire(50))
       return apiSendRejectionManual(connection);
 
-   uartBusy = TRUE;
    bool_t parsingResult = FALSE;
-
-   char_t* data = (char_t*) malloc(500);
+   char_t *data = (char_t*) malloc(READ_STREAM_BUF_SIZE+1);
    if (data)
    {
       size_t length = 0;
-      httpReadStream(connection, data, 499, &length, 0);
-      data[length] = 0;
-      parsingResult = parseK210Configs(&myEnv.k210config, data);
+      httpReadStream(connection, data, READ_STREAM_BUF_SIZE, &length, 0);
+      data[length] = '\0';
+      parsingResult = parseImgConfig(&(appEnv.imgConfig), data);
    }
-   else ESP_LOGE("API", "Config Parser couldn't allocate memory!");
+   else ESP_LOGE(LOG_TAG, "couldn't allocate memory!");
 
    if (parsingResult)
    {
+      free(appEnv.meterCounter);
+      appEnv.meterCounter = NULL;
+      appEnv.imgConfig.isConfigured = TRUE;
+      // nvsSaveString(NVS_k210config_VAR, data);
       sendConfigToK210();
-      nvsSaveString(NVS_k210config_VAR, data);
-      readingValid = FALSE;
-      myEnv.k210config.isConfigured = TRUE;
    }
 
+   uartRelease();
    free(data);
-   uartBusy = FALSE;
 
    if (parsingResult)
       return apiSendSuccessManual(connection, "Configs Recieved!");
@@ -52,25 +64,27 @@ error_t configHandler(HttpConnection* connection)
  * this function will send the k210Config object to k210
  * over UART as a ':' seperated string 
  */
-bool_t sendConfigToK210()
+bool_t sendConfigToK210(ImgConfig *imgConfig)
 {
    char_t* str = (char_t*) malloc(300);
    char_t* tmp = (char_t*) malloc(20);
-   sprintf(str, "Config:%d:%d", myEnv.k210config.digitCount, myEnv.k210config.invert ? 1 : 0);
-   for (uint_t i = 0; i < myEnv.k210config.digitCount; i++)
+   sprintf(str, "Config:%d:%d",
+      imgConfig->digitCount, imgConfig->invert ? 1 : 0);
+
+   for (uint_t i = 0; i < imgConfig->digitCount; i++)
    {
       sprintf(tmp, ":%d:%d:%d:%d", 
-         myEnv.k210config.positions[i].x,
-         myEnv.k210config.positions[i].y,
-         myEnv.k210config.positions[i].width,
-         myEnv.k210config.positions[i].height
+         imgConfig->positions[i].x,
+         imgConfig->positions[i].y,
+         imgConfig->positions[i].width,
+         imgConfig->positions[i].height
       );
       strcat(str, tmp);
    }
    free(tmp);
 
    uartSendString(str);
-   ESP_LOGI("UART", "sent %s", str);
+   ESP_LOGI(LOG_TAG, "uart sent %s", str);
    free(str);
    return TRUE;
 }

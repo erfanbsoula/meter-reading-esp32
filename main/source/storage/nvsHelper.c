@@ -79,7 +79,9 @@ bool_t nvsReadString(char_t *varName, char_t **varValue)
       return false;
 
    size_t required_size;
-   err = nvs_get_str(nvsHandle, varName, strMem, &required_size);
+   esp_err_t err = nvs_get_str(
+      nvsHandle, varName, strMem, &required_size);
+
    if (err != ESP_OK) {
       ESP_LOGE(LOG_TAG, "Failed to get the value of %s!", varName);
       free(strMem);

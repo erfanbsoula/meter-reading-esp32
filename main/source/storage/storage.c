@@ -1,10 +1,18 @@
 #include "../includes.h"
 #include "../utils/imgConfigParser.h"
-#include "definitions.h"
-#include "retrieve.h"
 #include "nvsHelper.h"
+#include "storage.h"
 
 #define LOG_TAG "storage"
+
+// NVS variable names
+#define NVS_imgConfig_VAR "imgConfig"
+#define NVS_username_VAR "username#"
+#define NVS_password_VAR "password#"
+#define NVS_meterCounter_VAR "meterCounter"
+
+#define DEFAULT_USERNAME "admin#"
+#define DEFAULT_PASSWORD "12345678"
 
 // ********************************************************************************************
 // forward declaration of functions
@@ -39,7 +47,7 @@ void retrieveUsers(Environment *appEnv)
 
    for (uint_t i = 0; i < USER_COUNT; i++)
    {
-      User *user = &(appEnv.users[i]);
+      User *user = &(appEnv->users[i]);
       usernameVar[usernameVarLen-2] = '0' + i;
       passwordVar[passwordVarLen-2] = '0' + i;
 

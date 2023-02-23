@@ -1,5 +1,19 @@
 #include "../includes.h"
 #include "handlers.h"
+#include "../environment.h"
+#include "../serial/uartHelper.h"
+#include "../server/httpHelper.h"
+
+static const char_t *LOG_TAG = "readMeter";
+
+// ********************************************************************************************
+// forward declaration of functions
+
+error_t getAIHandler(HttpConnection *connection);
+bool_t getAiHelper(char_t *res);
+bool_t checkAiResponseHelper();
+
+// ********************************************************************************************
 
 /**
  * handler function for serving the ai results
@@ -7,18 +21,19 @@
  * this function will request the ai result from k210
  * over UART and send the actual reading over api
  */
-error_t getAIHandler(HttpConnection* connection)
+error_t getAIHandler(HttpConnection *connection)
 {
    if (strcmp(connection->request.method, "GET"))
       return ERROR_NOT_FOUND;
 
-   ESP_LOGI("API", "AI result requested!");
-   if (uartBusy)
+   ESP_LOGI(LOG_TAG, "AI result requested!");
+   if (!uartAcquire(50))
       return apiSendRejectionManual(connection);
-
 
    char_t tmp[11];
    bool_t res = getAiHelper(tmp);
+
+   uartRelease();
 
    if (!res)
       return apiSendRejectionManual(connection);
@@ -30,28 +45,10 @@ error_t getAIHandler(HttpConnection* connection)
 
 /**
  * requests and recieves the AI reading over uart communication
- * handles'uartBusy' flag properly
  */
-bool_t getAiHelper(char_t* res)
+bool_t getAiHelper(char_t *res)
 {
-   if (uartBusy) return FALSE;
-
-   uartBusy = TRUE;
-   bool_t flag = getAiHelper_unsafe(res);
-
-   uartBusy = FALSE;
-   return flag;
-}
-
-// ********************************************************************************************
-
-/**
- * requests and recieves the AI reading over uart communication
- * it does not handle 'uartBusy' flag!
- */
-bool_t getAiHelper_unsafe(char_t* res)
-{
-   uint8_t* buffer = uartGetBuffer();
+   uint8_t *buffer = uartGetBuffer();
 
    vTaskDelay(100 / portTICK_PERIOD_MS);
    uartSendBytes("AIread:1", 8);
@@ -59,20 +56,20 @@ bool_t getAiHelper_unsafe(char_t* res)
 
    uartClearBuffer();
    uartSendBytes("AIsend:1", 8);
-   if (!waitForBuffer(5 + myEnv.k210config.digitCount, 10)) {
+   if (!waitForBuffer(5 + appEnv.imgConfig.digitCount, 10)) {
       ESP_LOGI("API", "K210 seems to be off! exiting the task ...");
       return FALSE;
    }
 
-   buffer[5 + myEnv.k210config.digitCount] = 0;
+   buffer[5 + appEnv.imgConfig.digitCount] = 0;
    ESP_LOGI("UART", "recieved '%s'", (char_t*)buffer);
    if (checkAiResponseHelper()) {
       ESP_LOGE("UART", "k210 sent invalid response for ai request");
       return FALSE;
    }
 
-   strncpy(res, (char_t*)(buffer+4), myEnv.k210config.digitCount);
-   res[myEnv.k210config.digitCount] = '\0';
+   strncpy(res, (char_t*)(buffer+4), appEnv.imgConfig.digitCount);
+   res[appEnv.imgConfig.digitCount] = '\0';
    return TRUE;
 }
 
@@ -89,7 +86,7 @@ bool_t checkAiResponseHelper()
    strncpy(tmp, (char_t*)buffer, 4);
    tmp[4] = '\0';
 
-   return buffer[4 + myEnv.k210config.digitCount] != ';' ||
+   return buffer[4 + appEnv.imgConfig.digitCount] != ';' ||
       strcmp(tmp, "num:");
 }
 

@@ -1,5 +1,22 @@
 #include "../includes.h"
 #include "handlers.h"
+#include "../serial/uartHelper.h"
+#include "../server/httpHelper.h"
+
+// number of bytes to expect when requesing image
+static const size_t TOTAL_SIZE = 76800;
+
+static const char_t *LOG_TAG = "camera";
+
+// ********************************************************************************************
+// forward declaration of functions
+
+error_t cameraImgHandler(HttpConnection *connection);
+error_t getAndSendCameraImg(HttpConnection *connection);
+error_t sendChunk(HttpConnection *connection);
+size_t findChunkSize(size_t size_count);
+
+// ********************************************************************************************
 
 /**
  * handler function for serving the camera image over a manual api.
@@ -12,33 +29,31 @@
  * client will face a CONTENT_LENGTH_MISMATCH error that should
  * be handled properly on the client-side
  */
-error_t cameraImgHandler(HttpConnection* connection)
+error_t cameraImgHandler(HttpConnection *connection)
 {
    if (strcmp(connection->request.method, "GET"))
       return ERROR_NOT_FOUND;
 
-   ESP_LOGI("API", "camera image requested!");
-   if (uartBusy)
+   ESP_LOGI(LOG_TAG, "camera image requested!");
+
+   if (!uartAcquire(50))
       return apiSendRejectionManual(connection);
 
-   uartBusy = TRUE;
-
    error_t error = httpSendHeaderManual(
-      connection, 200, "text/plain", TOTAL_SIZE*2
-   );
+      connection, 200, "text/plain", TOTAL_SIZE*2);
    if(error) {
-      uartBusy = FALSE;
+      uartRelease();
       return error;
    }
 
    error = getAndSendCameraImg(connection);
    if(error) {
-      uartBusy = FALSE;
+      uartRelease();
       return error;
    }
 
-   uartBusy = FALSE;
-   ESP_LOGI("API", "image task done! closing http connection");
+   uartRelease();
+   ESP_LOGI(LOG_TAG, "image task done!");
    return httpCloseStream(connection);
 }
 
@@ -51,7 +66,7 @@ error_t cameraImgHandler(HttpConnection* connection)
  * 
  * closes the http connection if k210 doesn't respond
  */
-error_t getAndSendCameraImg(HttpConnection* connection)
+error_t getAndSendCameraImg(HttpConnection *connection)
 {
    size_t size_count = 0, chunk_size = 0;
    char_t cmdStr[20];
@@ -71,11 +86,12 @@ error_t getAndSendCameraImg(HttpConnection* connection)
          sprintf(cmdStr, "Next:%d", chunk_size);
 
       uartSendString(cmdStr);
-      if (!waitForBuffer(chunk_size, 10)) {
-         ESP_LOGI("API", "K210 seems to be off! exiting the task ...");
+      uint8_t *buffer = uartReadBytesSync(chunk_size, 1000);
+      if (!buffer) {
+         ESP_LOGI(LOG_TAG, "K210 seems to be off! exiting the task ...");
          return NO_ERROR;
       }
-      ESP_LOGI("API", "read chunk with size %d", uartGetBufLength());
+      ESP_LOGI(LOG_TAG, "read chunk with size %d", uartGetBufLength());
 
       error_t error = sendChunk(connection);
       if (error) return error;
@@ -93,15 +109,15 @@ error_t getAndSendCameraImg(HttpConnection* connection)
  * encodes the current data in the UART buffer
  * and sends it as a base16 string (manual encoding)
  */
-error_t sendChunk(HttpConnection* connection)
+error_t sendChunk(HttpConnection *connection)
 {
    error_t error;
-   uint8_t* tmp_buf = (uint8_t*) malloc(4096);
+   uint8_t *tmp_buf = (uint8_t*) malloc(4096);
    if (tmp_buf == NULL)
-      ESP_LOGE("API", "couldn't allocate memory");
+      ESP_LOGE(LOG_TAG, "couldn't allocate memory");
       //! handle this error
 
-   uint8_t* buffer = uartGetBuffer();
+   uint8_t *buffer = uartGetBuffer();
    size_t bufLen = uartGetBufLength();
 
    uint32_t counter = 0;
@@ -135,8 +151,8 @@ size_t findChunkSize(size_t size_count)
 {
    if (size_count + BUFFER_SIZE <= TOTAL_SIZE)
       return BUFFER_SIZE;
-   else
-      return TOTAL_SIZE - size_count;
+
+   else return (TOTAL_SIZE - size_count);
 }
 
 // ********************************************************************************************
