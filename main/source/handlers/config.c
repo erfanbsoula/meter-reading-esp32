@@ -1,5 +1,6 @@
 #include "../includes.h"
-#include "../environment.h"
+#include "../envTypes.h"
+#include "../appEnv.h"
 #include "handlers.h"
 #include "../serial/uartHelper.h"
 #include "../server/httpHelper.h"
@@ -46,7 +47,7 @@ error_t configHandler(HttpConnection *connection)
       appEnv.meterCounter = NULL;
       appEnv.imgConfig.isConfigured = TRUE;
       // nvsSaveString(NVS_k210config_VAR, data);
-      sendConfigToK210();
+      sendConfigToK210(&(appEnv.imgConfig));
    }
 
    uartRelease();

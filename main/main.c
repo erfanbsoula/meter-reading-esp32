@@ -231,7 +231,7 @@ void app_main(void)
    wifiEnableAp();
 
    // Run the manual codes for initialization
-   initManual();
+   initApp();
 }
 
 

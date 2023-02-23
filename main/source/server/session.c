@@ -1,4 +1,5 @@
 #include "../includes.h"
+#include "../appEnv.h"
 #include "session.h"
 #include "httpHelper.h"
 #include "esp_random.h"

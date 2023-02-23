@@ -1,10 +1,11 @@
-#ifndef __ENVIRONMENT_H__
-#define __ENVIRONMENT_H__
+#ifndef __ENVTYPES_H__
+#define __ENVTYPES_H__
+
+#include "os_port.h"
 
 // ! supports maximum 10 users !
 #define USER_COUNT 2
 
-// warning!
 // sessionId length must be less than or equal to 32
 #define SESSION_ID_LENGTH 16
 
@@ -12,8 +13,6 @@ typedef struct _Position Position;
 typedef struct _ImgConfig ImgConfig;
 typedef struct _User User;
 typedef struct _Environment Environment;
-
-extern Environment appEnv;
 
 struct _Position
 {

@@ -1,6 +1,7 @@
 #include "../includes.h"
 #include "handlers.h"
-#include "../environment.h"
+#include "../envTypes.h"
+#include "../appEnv.h"
 #include "../serial/uartHelper.h"
 #include "../server/httpHelper.h"
 

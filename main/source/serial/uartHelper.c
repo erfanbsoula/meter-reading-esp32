@@ -1,6 +1,13 @@
-#include "../includes.h"
-#include "uartHelper.h"
+#include "esp_log.h"
+#include "driver/gpio.h"
+#include "driver/uart.h"
+#include "os_port.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/queue.h"
+#include "freertos/task.h"
 #include "freertos/semphr.h"
+
+#include "uartHelper.h"
 
 // this size will be actually allocated and used as the serial buffer:
 // **! make sure you have enough free memory. if not, change the BUFFER_SIZE !**
