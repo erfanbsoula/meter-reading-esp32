@@ -1,7 +1,7 @@
 #ifndef __RESTORE_H__
 #define __RESTORE_H__
 
-#include "storage.h"
+#include "../manual.h"
 
 void retrieveEnvironment(Environment *appEnv);
 

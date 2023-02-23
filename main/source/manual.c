@@ -35,7 +35,7 @@ void initManual()
    // initialize serial communication and serial task
    serialInit();
 
-   initStorage();
+   retrieveEnvironment(&appEnv);
 
    initSessionHandler();
    esp_timer_get_time();

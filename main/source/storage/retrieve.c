@@ -1,6 +1,6 @@
 #include "../includes.h"
 #include "../utils/imgConfigParser.h"
-#include "_defines.h"
+#include "definitions.h"
 #include "retrieve.h"
 #include "nvsHelper.h"
 

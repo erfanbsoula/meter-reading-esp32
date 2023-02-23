@@ -2,21 +2,27 @@
 #include "session.h"
 #include "esp_random.h"
 #include "httpHelper.h"
-#include "../storage/storage.h"
 
 #define READ_STREAM_BUF_SIZE 64
+
+// stores a pointer to the users array for easier access
+static User *users = NULL;
 
 // ********************************************************************************************
 // functions pre declaration
 error_t login(User *user, HttpConnection *connection);
 void getRandomStr(char_t *output, int len);
 char_t* parseFormField(char_t **dataPointer, char_t *field);
+User* findUser(char_t *username, char_t *password);
 
 // ********************************************************************************************
 
-void initSessionHandler()
+void initSessionHandler(User *users_)
 {
-   storageClearSessionIds();
+   users = users_;
+   for (int i = 0; i < USER_COUNT; i++) {
+      users[i].sessionId[0] = '\0';
+   }
 }
 
 // ********************************************************************************************
@@ -40,11 +46,11 @@ error_t loginHandler(HttpConnection *connection)
    char_t* password = parseFormField(&tmp, "password");
    free(data);
 
-   bool_t found = storage_UserExists(username, password);
+   User *currentUser = findUser(username, password);
    free(username);
    free(password);
 
-   if (found) return logIn(connection);
+   if (currentUser) return logIn(connection);
    return apiSendRejectionManual(connection);
 }
 
@@ -125,6 +131,19 @@ char_t* parseFormField(char_t **dataPointer, char_t *field)
 
 // ********************************************************************************************
 
+User* findUser(char_t *username, char_t *password)
+{
+   for (int i = 0; i < USER_COUNT; i++)
+   {
+      if (!strcmp(username, users[i].username))
+      {
+         if (!strcmp(password, users[i].password))
+            return &users[i];
 
+         return NULL;
+      }
+   }
+   return NULL;
+}
 
 // ********************************************************************************************
