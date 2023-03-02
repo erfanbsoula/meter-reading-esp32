@@ -17,6 +17,6 @@ size_t uartGetBufLength();
 void uartSendBytes(const void* data, size_t size);
 void uartSendString(const char_t* str);
 
-bool_t waitForBuffer(size_t chunkSize, uint_t waitCount);
+bool_t waitForBuffer(size_t chunkSize, uint_t waitTimeMS);
 
 #endif

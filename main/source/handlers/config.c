@@ -69,7 +69,7 @@ bool_t sendConfigToK210(ImgConfig *imgConfig)
 {
    char_t* str = (char_t*) malloc(300);
    char_t* tmp = (char_t*) malloc(20);
-   sprintf(str, "Config:%d:%d",
+   sprintf(str, "config:%d:%d",
       imgConfig->digitCount, imgConfig->invert ? 1 : 0);
 
    for (uint_t i = 0; i < imgConfig->digitCount; i++)
@@ -87,7 +87,15 @@ bool_t sendConfigToK210(ImgConfig *imgConfig)
    uartSendString(str);
    ESP_LOGI(LOG_TAG, "uart sent %s", str);
    free(str);
-   return TRUE;
+
+   uint8_t *hanshake = uartReadBytesSync(8, 500);
+   if (!hanshake || !strcmp((char*) hanshake, "recieved"))
+   {
+      ESP_LOGE(LOG_TAG, "handshaking failed!");
+      return false;
+   }
+   ESP_LOGI(LOG_TAG, "handshaking successful!");
+   return true;
 }
 
 // ********************************************************************************************

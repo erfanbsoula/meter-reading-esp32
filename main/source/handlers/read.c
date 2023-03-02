@@ -53,11 +53,16 @@ bool_t getAiHelper(char_t *res)
 
    vTaskDelay(100 / portTICK_PERIOD_MS);
    uartSendBytes("AIread:1", 8);
-   vTaskDelay(400 / portTICK_PERIOD_MS);
+   uint8_t *hanshake = uartReadBytesSync(4, 400);
+   if (!hanshake || !strcmp((char*) hanshake, "done"))
+   {
+      ESP_LOGE(LOG_TAG, "handshaking failed!");
+      return false;
+   }
 
    uartClearBuffer();
    uartSendBytes("AIsend:1", 8);
-   if (!waitForBuffer(5 + appEnv.imgConfig.digitCount, 10)) {
+   if (!waitForBuffer(5 + appEnv.imgConfig.digitCount, 300)) {
       ESP_LOGI("API", "K210 seems to be off! exiting the task ...");
       return FALSE;
    }

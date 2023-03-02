@@ -1,4 +1,5 @@
 #include "../includes.h"
+#include "../appEnv.h"
 #include "handlers.h"
 #include "../serial/uartHelper.h"
 #include "../server/httpHelper.h"
@@ -71,9 +72,8 @@ error_t getAndSendCameraImg(HttpConnection *connection)
    size_t size_count = 0, chunk_size = 0;
    char_t cmdStr[20];
 
+   uartSendBytes("camTakeNew", 10);
    vTaskDelay(200 / portTICK_PERIOD_MS);
-   uartSendBytes("GetNew:1", 8);
-   vTaskDelay(400 / portTICK_PERIOD_MS);
 
    while (size_count < TOTAL_SIZE)
    {
@@ -81,14 +81,15 @@ error_t getAndSendCameraImg(HttpConnection *connection)
       chunk_size = findChunkSize(size_count);
 
       if (size_count == 0) // if first request
-         sprintf(cmdStr, "Start:%d", chunk_size);
+         sprintf(cmdStr, "camStart:%d", chunk_size);
       else // if it's not the first request ...
-         sprintf(cmdStr, "Next:%d", chunk_size);
+         sprintf(cmdStr, "camNext:%d", chunk_size);
 
       uartSendString(cmdStr);
       uint8_t *buffer = uartReadBytesSync(chunk_size, 1000);
       if (!buffer) {
          ESP_LOGI(LOG_TAG, "K210 seems to be off! exiting the task ...");
+         appEnv.errorLog.k210_not_responding = true;
          return NO_ERROR;
       }
       ESP_LOGI(LOG_TAG, "read chunk with size %d", uartGetBufLength());
@@ -99,7 +100,6 @@ error_t getAndSendCameraImg(HttpConnection *connection)
    }
 
    uartClearBuffer();
-   vTaskDelay(100 / portTICK_PERIOD_MS);
    return NO_ERROR;
 }
 

@@ -9,10 +9,16 @@
 // sessionId length must be less than or equal to 32
 #define SESSION_ID_LENGTH 16
 
+typedef struct _ErrorLog ErrorLog;
 typedef struct _Position Position;
 typedef struct _ImgConfig ImgConfig;
 typedef struct _User User;
 typedef struct _Environment Environment;
+
+struct _ErrorLog
+{
+   bool_t k210_not_responding;
+};
 
 struct _Position
 {
@@ -42,6 +48,7 @@ struct _Environment
    User users[USER_COUNT];
    ImgConfig imgConfig;
    char_t *meterCounter;
+   ErrorLog errorLog;
 };
 
 #endif

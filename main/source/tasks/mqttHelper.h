@@ -1,5 +1,5 @@
-#ifndef __MYMQTT_H__
-#define __MYMQTT_H__
+#ifndef __MQTT_HELPER_H__
+#define __MQTT_HELPER_H__
 
 #include "includes.h"
 
