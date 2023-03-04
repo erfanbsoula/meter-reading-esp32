@@ -76,8 +76,12 @@ void setDefaultUser(User *user, uint_t indx,
 
    user->password = strCopy(DEFAULT_PASSWORD, defaultPasswordLen);
 
-   nvsSaveString(usernameVar, user->username);
-   nvsSaveString(passwordVar, user->password);
+   bool_t uSaved, pSaved;
+   uSaved = nvsSaveString(usernameVar, user->username);
+   pSaved = nvsSaveString(passwordVar, user->password);
+
+   if (uSaved && pSaved)
+      ESP_LOGI(LOG_TAG, "saved default username and password");
 }
 
 // ********************************************************************************************
