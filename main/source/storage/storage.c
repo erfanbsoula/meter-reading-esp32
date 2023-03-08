@@ -10,6 +10,7 @@
 #define NVS_username_VAR "username#"
 #define NVS_password_VAR "password#"
 #define NVS_meterCounter_VAR "meterCounter"
+#define NVS_mqttConfig_VAR "mqttConfig"
 
 #define DEFAULT_USERNAME "admin#"
 #define DEFAULT_PASSWORD "12345678"
@@ -22,8 +23,10 @@ void retrieveUsers(Environment *appEnv);
 void setDefaultUser(User *user, uint_t indx,
    char_t *usernameVar, char_t *passwordVar);
 
-void retrieveImgConfig(ImgConfig *imgConfig); 
-void retrieveMeterCounter(Environment *appEnv);  
+void retrieveImgConfig(ImgConfig *imgConfig);
+void retrieveMeterCounter(Environment *appEnv);
+bool_t saveImgConfigJson(char_t *imgConfigJson);
+bool_t saveMqttConfigJson(char_t *mqttConfigJson);
 char_t* strCopy(char_t *str, size_t strLen);
 
 // ********************************************************************************************
@@ -132,6 +135,18 @@ void retrieveMeterCounter(Environment *appEnv)
    ESP_LOGI(LOG_TAG,
       "meterCounter retrieved successfully (%s)",
       appEnv->meterCounter);
+}
+
+// ********************************************************************************************
+
+bool_t saveImgConfigJson(char_t *imgConfigJson)
+{
+   return nvsSaveString(NVS_imgConfig_VAR, imgConfigJson);
+}
+
+bool_t saveMqttConfigJson(char_t *mqttConfigJson)
+{
+   return nvsSaveString(NVS_mqttConfig_VAR, mqttConfigJson);
 }
 
 // ********************************************************************************************

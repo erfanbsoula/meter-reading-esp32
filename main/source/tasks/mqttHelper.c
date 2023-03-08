@@ -3,19 +3,21 @@
 
 static const char *LOG_TAG = "mqtt";
 
-static const char *MQTT_SERVER_IP = "192.168.8.10";
-static const uint16_t MQTT_SERVER_PORT = 1883;
+// static const char_t *DEFAULT_SERVER_IP = "192.168.8.10";
+// static const uint16_t DEFAULT_SERVER_PORT = 1883;
+// static const systime_t DEFAULT_LOOP_DELAY = 10000;
+// static const char_t *DEFAULT_STATUS_TOPIC = "board/status";
+// static const char_t *DEFAULT_MESSAGE_TOPIC = "board/result";
 
-static IpAddr SERVER_IP_ADDR;
-
-static const char *STATUS_TOPIC = "board/status";
-static const char *MESSAGE_TOPIC = "board/result";
+static IpAddr serverIpAddr;
+MqttConfig mqttConfig;
 
 MqttClientContext mqttClientContext;
 
 // ********************************************************************************************
 // forward declaration of functions
 
+void mqttInitConfiguration();
 void mqttTask(void *param);
 error_t manualPublishProcess();
 error_t mqttConnect();
@@ -28,13 +30,25 @@ void mqttPublishCallback(MqttClientContext *context,
 
 // ********************************************************************************************
 
+void mqttInitConfiguration()
+{
+   ipStringToAddr(mqttConfig.serverIP, &serverIpAddr);
+   mqttClientInit(&mqttClientContext);
+}
+
+// ********************************************************************************************
+
 void mqttTask(void *param)
 {
    error_t error;
    bool_t connectionState = FALSE;
 
-   ipStringToAddr(MQTT_SERVER_IP, &SERVER_IP_ADDR);
-   mqttClientInit(&mqttClientContext);
+   // wait until configuration is loaded
+   while(!mqttConfig.isConfigured)
+   {
+      ESP_LOGI(LOG_TAG, "waiting for configuration ...");
+      osDelayTask(10000);
+   }
 
    while(1)
    {
@@ -45,19 +59,13 @@ void mqttTask(void *param)
          {
             ESP_LOGI(LOG_TAG, "link is up!");
             error = mqttConnect();
-            if (!error) connectionState = TRUE;
-            else
-            {
-               // delay between subsequent connection attempts
-               ESP_LOGE(LOG_TAG, "couldn't connect!");
-               osDelayTask(2000);
+            if (!error) {
+               connectionState = TRUE;
+               continue;
             }
+            else ESP_LOGE(LOG_TAG, "couldn't connect!");
          }
-         else
-         {
-            ESP_LOGE(LOG_TAG, "link is not up!");
-            osDelayTask(2000);
-         }
+         else ESP_LOGE(LOG_TAG, "link is not up!");
       }
       else
       {
@@ -69,9 +77,8 @@ void mqttTask(void *param)
             connectionState = FALSE;
          }
          else mqttClientTask(&mqttClientContext, 100);
-
-         osDelayTask(10000);
       }
+      osDelayTask(mqttConfig.taskLoopDelay);
    }
 }
 
@@ -81,26 +88,11 @@ error_t manualPublishProcess()
 {
    error_t error;
 
-   error = mqttClientPublish(&mqttClientContext, MESSAGE_TOPIC,
+   error = mqttClientPublish(
+      &mqttClientContext, mqttConfig.messageTopic,
       "hello", 5, MQTT_QOS_LEVEL_1, TRUE, NULL);
-   
+
    return error;
-}
-
-// ********************************************************************************************
-
-void mqttPublishCallback(MqttClientContext *context,
-   const char_t *topic, const uint8_t *message, size_t length,
-   bool_t dup, MqttQosLevel qos, bool_t retain, uint16_t packetId)
-{
-   //Check topic name
-   if(!strcmp(topic, MESSAGE_TOPIC))
-   {
-      char_t* str = (char_t*) malloc(length+1);
-      strncpy(str, (char_t *) message, length);
-      str[length] = '\0';
-      ESP_LOGI(LOG_TAG, "PUBLISH packet received '%s'", str);
-   }
 }
 
 // ********************************************************************************************
@@ -110,7 +102,7 @@ error_t mqttConnect()
    mqttPrepareSettings();
 
    ESP_LOGI(LOG_TAG,
-      "connecting to MQTT server %s...", MQTT_SERVER_IP);
+      "connecting to MQTT server %s...", mqttConfig.serverIP);
 
    error_t error = mqttConnectionRoutine();
 
@@ -131,7 +123,8 @@ void mqttPrepareSettings()
    mqttClientRegisterPublishCallback(
       &mqttClientContext, mqttPublishCallback);
    
-   mqttClientSetWillMessage(&mqttClientContext, STATUS_TOPIC,
+   mqttClientSetWillMessage(
+      &mqttClientContext, mqttConfig.statusTopic,
       "offline", 7, MQTT_QOS_LEVEL_0, FALSE);
 
    mqttClientSetTimeout(&mqttClientContext, 10000);
@@ -143,18 +136,35 @@ void mqttPrepareSettings()
 error_t mqttConnectionRoutine()
 {
    error_t error = mqttClientConnect(&mqttClientContext,
-      &SERVER_IP_ADDR, MQTT_SERVER_PORT, TRUE);
+      &serverIpAddr, mqttConfig.serverPort, TRUE);
    if (error) return error;
 
    // subscribe to the desired topics
    error = mqttClientSubscribe(&mqttClientContext,
-      MESSAGE_TOPIC, MQTT_QOS_LEVEL_1, NULL);
+      mqttConfig.messageTopic, MQTT_QOS_LEVEL_1, NULL);
    if (error) return error;
 
-   error = mqttClientPublish(&mqttClientContext, STATUS_TOPIC,
+   error = mqttClientPublish(
+      &mqttClientContext, mqttConfig.statusTopic,
       "online", 6, MQTT_QOS_LEVEL_1, TRUE, NULL);
 
    return error;
+}
+
+// ********************************************************************************************
+
+void mqttPublishCallback(MqttClientContext *context,
+   const char_t *topic, const uint8_t *message, size_t length,
+   bool_t dup, MqttQosLevel qos, bool_t retain, uint16_t packetId)
+{
+   //Check topic name
+   if(!strcmp(topic, mqttConfig.messageTopic))
+   {
+      char_t* str = (char_t*) malloc(length+1);
+      strncpy(str, (char_t *) message, length);
+      str[length] = '\0';
+      ESP_LOGI(LOG_TAG, "PUBLISH packet received '%s'", str);
+   }
 }
 
 // ********************************************************************************************

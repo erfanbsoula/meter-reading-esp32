@@ -4,5 +4,7 @@
 #include "../envTypes.h"
 
 void retrieveEnvironment(Environment *appEnv);
+bool_t saveImgConfigJson(char_t *imgConfigJson);
+bool_t saveMqttConfigJson(char_t *mqttConfigJson);
 
 #endif

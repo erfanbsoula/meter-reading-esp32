@@ -5,6 +5,8 @@
 #include "../serial/uartHelper.h"
 #include "../server/httpHelper.h"
 #include "../utils/imgConfigParser.h"
+#include "../storage/storage.h"
+#include "../tasks/mqttHelper.h"
 
 static const uint_t READ_STREAM_BUF_SIZE = 511;
 static const char_t *LOG_TAG = "configHandler";
@@ -46,7 +48,8 @@ error_t configHandler(HttpConnection *connection)
       free(appEnv.meterCounter);
       appEnv.meterCounter = NULL;
       appEnv.imgConfig.isConfigured = TRUE;
-      // nvsSaveString(NVS_k210config_VAR, data);
+      cJSON_Minify(data);
+      saveImgConfigJson(data);
       sendConfigToK210(&(appEnv.imgConfig));
    }
 
@@ -96,6 +99,46 @@ bool_t sendConfigToK210(ImgConfig *imgConfig)
    }
    ESP_LOGI(LOG_TAG, "handshaking successful!");
    return true;
+}
+
+// ********************************************************************************************
+
+error_t mqttConfigHandler(HttpConnection *connection)
+{
+   if (strcmp(connection->request.method, "POST"))
+      return ERROR_NOT_FOUND;
+
+   if (!uartAcquire(50))
+      return apiSendRejectionManual(connection);
+
+   bool_t parsingResult = FALSE;
+   char_t *data = (char_t*) malloc(READ_STREAM_BUF_SIZE+1);
+   if (data)
+   {
+      size_t length = 0;
+      httpReadStream(connection, data, READ_STREAM_BUF_SIZE, &length, 0);
+      data[length] = '\0';
+
+      free(mqttConfig.serverIP);
+      free(mqttConfig.statusTopic);
+      free(mqttConfig.messageTopic);
+      parsingResult = parseImgConfig(&mqttConfig, data);
+   }
+   else ESP_LOGE(LOG_TAG, "couldn't allocate memory!");
+
+   if (parsingResult)
+   {
+      cJSON_Minify(data);
+      saveMqttConfigJson(data);
+   }
+
+   uartRelease();
+   free(data);
+
+   if (parsingResult)
+      return apiSendSuccessManual(connection, "Configs Recieved!");
+
+   return apiSendRejectionManual(connection);
 }
 
 // ********************************************************************************************
