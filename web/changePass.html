@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+   <title>ESP32</title>
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+   <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+<!-- **************************************************************************************************** -->
+<!-- header -->
+<header class="width-full">
+   <div class="row-flex center">
+      <div class="space-left" id="menu-btn">
+         <span></span>
+         <span></span>
+         <span></span>
+         <span></span>
+      </div>
+      <div id="header-title">IBMCO</div>
+   </div>
+   <!-- <img src="assets/icons/search.png" alt="icon" id="search-img"> -->
+   <img src="assets/ai.png" alt="icon" class="header-img">
+</header>
+<!-- **************************************************************************************************** -->
+<div class="width-full row-flex">
+<!-- **************************************************************************************************** -->
+<!-- sidebar -->
+   <div id="sidebar">
+      <div id="sidebar-content-container">
+         <nav id="navbar">
+            <div onclick="window.location.href = 'index.html';" class="nav-item">
+               <div class="pointer"></div>
+               <div class="space-left">Home</div>
+            </div>
+            <div onclick="window.location.href = 'mqttConfig.html';" class="nav-item">
+               <div class="pointer"></div>
+               <div class="space-left">MQTT Setting</div>
+            </div>
+         </nav>
+         <div class="exit">
+            <img src="assets/logout.png" alt="">
+            <div class="space-left">logout</div>
+         </div>
+      </div>
+   </div>
+<!-- **************************************************************************************************** -->
+   <div class="width-full" id="content-container">
+      <main>
+         <br>
+			<div id="login-container">
+				<div id="login-card">
+					<div id="card-header">
+						<div>Change Password</div>
+					</div>
+					<form method="post" action="/login">
+						<label for="old-password">current password:</label>
+						<input id="old-password" name="old-password" type="password">
+						<br><br>
+						<label for="new-password1">new password:</label>
+						<input id="new-password1" name="new-password1" type="password">
+						<br><br>
+						<label for="new-password2">repeat new password:</label>
+						<input id="new-password2" name="new-password2" type="password">
+						<br><br>
+						<input type="submit" class="button-gradient" value="update">
+					</form>
+				</div>
+		  	</div>
+		</main>
+	</div>
+<!-- **************************************************************************************************** -->
+</div>
+</body>
+
+<script src="sidebar-menu.js"></script>
+</html>

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+   <title>ESP32</title>
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+   <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+<!-- **************************************************************************************************** -->
+<!-- header -->
+<header class="width-full">
+   <div class="row-flex center">
+      <div class="space-left" id="menu-btn">
+         <span></span>
+         <span></span>
+         <span></span>
+         <span></span>
+      </div>
+      <div id="header-title">IBMCO</div>
+   </div>
+   <img src="assets/ai.png" alt="icon" class="header-img">
+</header>
+<!-- **************************************************************************************************** -->
+<div class="width-full row-flex">
+<!-- **************************************************************************************************** -->
+<!-- sidebar -->
+   <div id="sidebar">
+      <div id="sidebar-content-container">
+         <nav id="navbar">
+            <div onclick="window.location.href = 'index.html';" class="nav-item">
+               <div class="pointer"></div>
+               <div class="space-left">Home</div>
+            </div>
+            <div onclick="window.location.href = 'changePass.html';" class="nav-item">
+               <div class="pointer"></div>
+               <div class="space-left">Change Password</div>
+            </div>
+         </nav>
+         <div class="exit">
+            <img src="assets/logout.png" alt="">
+            <div class="space-left">logout</div>
+         </div>
+      </div>
+   </div>
+<!-- **************************************************************************************************** -->
+   <div class="width-full" id="content-container">
+      <main>
+         <br>
+			<div id="login-container">
+				<div id="login-card" style="width: 500px;">
+					<div id="card-header">
+						<div>MQTT Settings</div>
+					</div>
+					<form id="mqttSettings">
+						<div class="row-flex center width-full">
+                     <div class="space-right" style="width: 70%;">
+                        <label for="serverIP">Server IP</label>
+                        <input type="text" name="serverIP" id="serverIP">
+                     </div>
+                     <div class="space-left" style="width: 30%;">
+                        <label for="serverPort">Server Port</label>
+                        <input type="text" name="serverPort" id="serverPort">
+                     </div>
+                  </div>
+                  <div class="row-flex center width-full space-top">
+                     <div class="space-right" style="width: 50%;">
+                        <label for="interval">Publish Interval</label>
+                        <input type="text" name="interval" id="interval">
+                     </div>
+                     <div class="space-left" style="width: 50%;"></div>
+                  </div>
+                  <div class="row-flex center width-full space-top">
+                     <div class="space-right" style="width: 50%;">
+                        <label for="statusTopic">Status Topic</label>
+                        <input type="text" name="statusTopic" id="statusTopic">
+                     </div>
+                     <div class="space-left" style="width: 50%;">
+                        <label for="resultTopic">Result Topic</label>
+                        <input type="text" name="resultTopic" id="resultTopic">
+                     </div>
+                  </div>
+                  <br>
+                  <div class="width-full row-flex center" style="margin-bottom: 25px;">
+                     <div id="error-massage" class="width-full"></div>
+                     <input type="submit" class="button-gradient" value="send" style="margin-bottom: 0px;">
+                  </div>
+					</form>
+				</div>
+			</div>
+		</main>
+   </div>
+</div>
+<!-- **************************************************************************************************** -->
+</div>
+</body>
+
+<script src="sidebar-menu.js"></script>
+<script src="mqttConfig.js"></script>
+</html>

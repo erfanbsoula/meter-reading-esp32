@@ -6,14 +6,6 @@
 //    ESP_LOGE("aiTask","failed to create task!");
 // }
 
-// initialize mqtt task
-// ret = xTaskCreatePinnedToCore(
-//    mqttTask, "mqttTask", 2048, NULL, 12, NULL, 1
-// );
-// if(ret != pdPASS) { // error check
-//    ESP_LOGE("mqttTask","failed to create task!");
-// }
-
 // ********************************************************************************************
 
 // ai task always running to keep the AI reading updated

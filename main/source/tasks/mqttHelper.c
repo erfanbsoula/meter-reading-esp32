@@ -1,7 +1,8 @@
 #include "mqttHelper.h"
 #include "mqtt/mqtt_client.h"
+#include "os_port.h"
 
-static const char *LOG_TAG = "mqtt";
+#define MESSAGE_QUEUE_LEN 5
 
 // static const char_t *DEFAULT_SERVER_IP = "192.168.8.10";
 // static const uint16_t DEFAULT_SERVER_PORT = 1883;
@@ -9,9 +10,12 @@ static const char *LOG_TAG = "mqtt";
 // static const char_t *DEFAULT_STATUS_TOPIC = "board/status";
 // static const char_t *DEFAULT_MESSAGE_TOPIC = "board/result";
 
+static const char *LOG_TAG = "mqtt";
+static bool_t restart = FALSE;
+char_t *messageQueue[MESSAGE_QUEUE_LEN];
+
 static IpAddr serverIpAddr;
 MqttConfig mqttConfig;
-
 MqttClientContext mqttClientContext;
 
 // ********************************************************************************************
@@ -23,6 +27,7 @@ error_t manualPublishProcess();
 error_t mqttConnect();
 void mqttPrepareSettings();
 error_t mqttConnectionRoutine();
+char_t* mqttStrCopy(char_t *str);
 
 void mqttPublishCallback(MqttClientContext *context,
    const char_t *topic, const uint8_t *message, size_t length,
@@ -32,8 +37,17 @@ void mqttPublishCallback(MqttClientContext *context,
 
 void mqttInitConfiguration()
 {
-   ipStringToAddr(mqttConfig.serverIP, &serverIpAddr);
    mqttClientInit(&mqttClientContext);
+
+   for (int32_t i = 0; i < MESSAGE_QUEUE_LEN; i++)
+      messageQueue[i] = NULL;
+
+   // initialize mqtt task
+   BaseType_t ret = xTaskCreatePinnedToCore(
+      mqttTask, "mqttTask", 2048, NULL, 12, NULL, 1
+   );
+   if(ret != pdPASS)
+      ESP_LOGE(LOG_TAG,"failed to create mqtt task!");
 }
 
 // ********************************************************************************************
@@ -52,6 +66,12 @@ void mqttTask(void *param)
 
    while(1)
    {
+      if (restart) {
+         mqttClientClose(&mqttClientContext);
+         connectionState = FALSE;
+         restart = FALSE;
+      }
+
       if(!connectionState)
       {
          // make sure the link is up
@@ -86,13 +106,25 @@ void mqttTask(void *param)
 
 error_t manualPublishProcess()
 {
-   error_t error;
+   error_t error, result = NO_ERROR;
 
-   error = mqttClientPublish(
-      &mqttClientContext, mqttConfig.messageTopic,
-      "hello", 5, MQTT_QOS_LEVEL_1, TRUE, NULL);
-
-   return error;
+   for (int32_t i = 0; i < MESSAGE_QUEUE_LEN; i++)
+   {
+      if (messageQueue[i])
+      {
+         error = mqttClientPublish(
+            &mqttClientContext, mqttConfig.messageTopic,
+            messageQueue[i], strlen(messageQueue[i]),
+            MQTT_QOS_LEVEL_1, TRUE, NULL);
+         
+         if (!error) {
+            free(messageQueue[i]);
+            messageQueue[i] = NULL;
+         }
+         else result = ERROR_FAILURE;
+      }
+   }
+   return result;
 }
 
 // ********************************************************************************************
@@ -117,6 +149,8 @@ error_t mqttConnect()
 
 void mqttPrepareSettings()
 {
+   ipStringToAddr(mqttConfig.serverIP, &serverIpAddr);
+
    mqttClientSetTransportProtocol(
       &mqttClientContext, MQTT_TRANSPORT_PROTOCOL_TCP);
 
@@ -140,9 +174,9 @@ error_t mqttConnectionRoutine()
    if (error) return error;
 
    // subscribe to the desired topics
-   error = mqttClientSubscribe(&mqttClientContext,
-      mqttConfig.messageTopic, MQTT_QOS_LEVEL_1, NULL);
-   if (error) return error;
+   // error = mqttClientSubscribe(&mqttClientContext,
+   //    mqttConfig.messageTopic, MQTT_QOS_LEVEL_1, NULL);
+   // if (error) return error;
 
    error = mqttClientPublish(
       &mqttClientContext, mqttConfig.statusTopic,
@@ -165,6 +199,37 @@ void mqttPublishCallback(MqttClientContext *context,
       str[length] = '\0';
       ESP_LOGI(LOG_TAG, "PUBLISH packet received '%s'", str);
    }
+}
+
+// ********************************************************************************************
+
+bool_t mqttMessageQueueAdd(char_t *message)
+{
+   for (int32_t i = 0; i < MESSAGE_QUEUE_LEN; i++)
+   {
+      if (messageQueue[i] == NULL)
+      {
+         char_t mCopy = mqttStrCopy(message);
+         if (!mCopy) return false;
+
+         messageQueue[i] = mCopy;
+         return true;
+      }
+   }
+   return false;
+}
+
+// ********************************************************************************************
+
+char_t* mqttStrCopy(char_t *str)
+{
+   char_t *strCopied = malloc(strlen(str) + 1);
+   if (strCopied == NULL) {
+      ESP_LOGE(LOG_TAG, "memory allocation failed!");
+      return NULL;
+   }
+   strcpy(strCopied, str);
+   return strCopied;
 }
 
 // ********************************************************************************************

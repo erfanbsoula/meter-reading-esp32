@@ -17,5 +17,6 @@ struct _MqttConfig
 };
 
 void mqttTask(void *param);
+char_t* mqttStrCopy(char_t *str);
 
 #endif

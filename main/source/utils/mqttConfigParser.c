@@ -8,7 +8,6 @@
 bool_t parseMqttConfig(MqttConfig *mqttConfig, char_t *data);
 bool_t maqttParseHelper(MqttConfig *mqttConfig, cJSON *root);
 bool_t isValidIpAddress(char_t *ipAddress_);
-char_t* mqttStrCopy(char_t *str);
 
 // ********************************************************************************************
 
@@ -103,13 +102,4 @@ bool_t isValidIpAddress(char_t *ipAddress_)
 
 // ********************************************************************************************
 
-char_t* mqttStrCopy(char_t *str)
-{
-   char_t *strCopied = malloc(strlen(str) + 1);
-   if (strCopied == NULL) {
-      ESP_LOGE("mqttConfigParser", "memory allocation failed!");
-      return NULL;
-   }
-   strcpy(strCopied, str);
-   return strCopied;
-}
+

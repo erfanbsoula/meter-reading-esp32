@@ -28,5 +28,5 @@ void initApp()
    initSessionHandler();
 
    // testing time
-   ESP_LOGI("init", "time = %d", (int32_t)esp_timer_get_time());
+   ESP_LOGI("init", "time = %d", (int32_t)osGetSystemTime());
 }
