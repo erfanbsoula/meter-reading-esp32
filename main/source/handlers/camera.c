@@ -1,8 +1,13 @@
-#include "../includes.h"
-#include "../appEnv.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "esp_system.h"
+#include "esp_log.h"
 #include "handlers.h"
-#include "../serial/uartHelper.h"
-#include "../server/httpHelper.h"
+
+#include "source/serial/uartHelper.h"
+#include "source/server/httpHelper.h"
+#include "source/appEnv.h"
 
 // number of bytes to expect when requesing image
 static const size_t TOTAL_SIZE = 76800;

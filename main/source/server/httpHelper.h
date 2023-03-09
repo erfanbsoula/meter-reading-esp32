@@ -1,6 +1,9 @@
 #ifndef __HTTP_HELPER_H__
 #define __HTTP_HELPER_H__
 
+#include "core/net.h"
+#include "http/http_server.h"
+
 // HTTP helper functions
 error_t httpSendHeaderManual(HttpConnection* connection,
    uint_t statusCode, char_t* contentType, size_t length);

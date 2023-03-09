@@ -1,5 +1,11 @@
-#include "../includes.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "esp_system.h"
+#include "esp_log.h"
 #include "nvsHelper.h"
+
+#include "nvs_flash.h"
 
 #define LOG_TAG "NVS"
 #define NVS_PAGE_NAME "storage"
@@ -141,3 +147,5 @@ bool_t nvsFinish(nvs_handle_t nvsHandle)
    nvs_close(nvsHandle);
    return true;
 }
+
+// ********************************************************************************************

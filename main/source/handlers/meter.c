@@ -1,9 +1,15 @@
-#include "../includes.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "esp_system.h"
+#include "esp_log.h"
+#include "os_port.h"
+#include "os_port_freertos.h"
 #include "handlers.h"
-#include "../envTypes.h"
-#include "../appEnv.h"
-#include "../serial/uartHelper.h"
-#include "../server/httpHelper.h"
+
+#include "source/serial/uartHelper.h"
+#include "source/server/httpHelper.h"
+#include "source/appEnv.h"
 
 static const char_t *LOG_TAG = "readMeter";
 

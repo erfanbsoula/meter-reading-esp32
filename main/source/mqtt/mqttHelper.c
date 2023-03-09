@@ -1,6 +1,12 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "esp_system.h"
+#include "esp_log.h"
 #include "mqttHelper.h"
+
 #include "mqtt/mqtt_client.h"
-#include "os_port.h"
+#include "os_port_freertos.h"
 
 #define MESSAGE_QUEUE_LEN 5
 
@@ -37,6 +43,13 @@ void mqttPublishCallback(MqttClientContext *context,
 
 void mqttInitConfiguration()
 {
+   if (mqttConfig.isConfigured &&
+      !mqttConfig.mqttEnable)
+   {
+      ESP_LOGI(LOG_TAG, "*! disabled !*");
+      return;
+   }
+
    mqttClientInit(&mqttClientContext);
 
    for (int32_t i = 0; i < MESSAGE_QUEUE_LEN; i++)
@@ -209,7 +222,7 @@ bool_t mqttMessageQueueAdd(char_t *message)
    {
       if (messageQueue[i] == NULL)
       {
-         char_t mCopy = mqttStrCopy(message);
+         char_t *mCopy = mqttStrCopy(message);
          if (!mCopy) return false;
 
          messageQueue[i] = mCopy;

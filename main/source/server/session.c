@@ -1,8 +1,13 @@
-#include "../includes.h"
-#include "../appEnv.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "esp_system.h"
+#include "esp_log.h"
 #include "session.h"
+
 #include "httpHelper.h"
 #include "esp_random.h"
+#include "source/appEnv.h"
 
 #define READ_STREAM_BUF_SIZE 64
 

@@ -1,8 +1,14 @@
-#include "../includes.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "esp_system.h"
+#include "esp_log.h"
 #include "router.h"
+
 #include "httpHelper.h"
 #include "session.h"
-#include "../handlers/handlers.h"
+
+#include "source/handlers/handlers.h"
 
 // ********************************************************************************************
 // forward declaration of functions

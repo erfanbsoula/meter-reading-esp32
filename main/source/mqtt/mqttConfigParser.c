@@ -1,6 +1,11 @@
-#include "../includes.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "esp_system.h"
+#include "esp_log.h"
 #include "mqttConfigParser.h"
-#include "cJSON.h"
+
+#include "source/utils/cJSON.h"
 
 // ********************************************************************************************
 // forward declaration of functions

@@ -1,12 +1,19 @@
-#include "../includes.h"
-#include "../envTypes.h"
-#include "../appEnv.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "esp_system.h"
+#include "esp_log.h"
 #include "handlers.h"
-#include "../serial/uartHelper.h"
-#include "../server/httpHelper.h"
-#include "../utils/imgConfigParser.h"
-#include "../storage/storage.h"
-#include "../tasks/mqttHelper.h"
+
+#include "source/serial/uartHelper.h"
+#include "source/server/httpHelper.h"
+#include "source/storage/storage.h"
+
+#include "source/utils/imgConfigParser.h"
+#include "source/mqtt/mqttConfigParser.h"
+#include "source/utils/cJSON.h"
+
+#include "source/appEnv.h"
 
 static const uint_t READ_STREAM_BUF_SIZE = 511;
 static const char_t *LOG_TAG = "configHandler";
@@ -122,7 +129,7 @@ error_t mqttConfigHandler(HttpConnection *connection)
       free(mqttConfig.serverIP);
       free(mqttConfig.statusTopic);
       free(mqttConfig.messageTopic);
-      parsingResult = parseImgConfig(&mqttConfig, data);
+      parsingResult = parseMqttConfig(&mqttConfig, data);
    }
    else ESP_LOGE(LOG_TAG, "couldn't allocate memory!");
 

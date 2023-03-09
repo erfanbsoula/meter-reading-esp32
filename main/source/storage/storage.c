@@ -1,7 +1,9 @@
-#include "../includes.h"
-#include "../utils/imgConfigParser.h"
-#include "nvsHelper.h"
+#include "esp_system.h"
+#include "esp_log.h"
 #include "storage.h"
+
+#include "nvsHelper.h"
+#include "source/utils/imgConfigParser.h"
 
 #define LOG_TAG "storage"
 

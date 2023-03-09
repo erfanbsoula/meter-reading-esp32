@@ -1,5 +1,5 @@
+#include "esp_system.h"
 #include "esp_log.h"
-#include "esp_timer.h"
 
 #include "source.h"
 #include "envTypes.h"
@@ -7,6 +7,7 @@
 #include "serial/uartHelper.h"
 #include "storage/storage.h"
 #include "server/session.h"
+#include "mqtt/mqttHelper.h"
 
 // ********************************************************************************************
 // Global Variables
