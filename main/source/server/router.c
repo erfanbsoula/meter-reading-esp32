@@ -58,7 +58,7 @@ error_t routerHelper(HttpConnection *connection,
 {
     // use handler functions (API)
 	if (!strcmp(uri, "/config"))
-		return configHandler(connection);
+		return imgConfigHandler(connection);
 
 	if (!strcmp(uri, "/camera"))
 		return cameraImgHandler(connection);

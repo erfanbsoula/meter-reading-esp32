@@ -39,9 +39,10 @@ bool_t parseMqttConfig(MqttConfig *mqttConfig, char_t *data)
 
 bool_t maqttParseHelper(MqttConfig *mqttConfig, cJSON *root)
 {
-   cJSON *serverPort, *loopInterval;
+   cJSON *serverPort, *loopInterval, *mqttEnable;
    cJSON *serverIP, *statusTopic, *resultTopic;
 
+   mqttEnable = cJSON_GetObjectItem(root, "mqttEnable");
    serverPort = cJSON_GetObjectItem(root, "serverPort");
    loopInterval = cJSON_GetObjectItem(root, "interval");
 
@@ -49,13 +50,14 @@ bool_t maqttParseHelper(MqttConfig *mqttConfig, cJSON *root)
    statusTopic = cJSON_GetObjectItem(root, "statusTopic");
    resultTopic = cJSON_GetObjectItem(root, "resultTopic");
 
-   if(!cJSON_IsNumber(serverPort) ||
+   if(!cJSON_IsNumber(mqttEnable) ||
+      !cJSON_IsNumber(serverPort) ||
       !cJSON_IsNumber(loopInterval) ||
       !cJSON_IsString(serverIP) ||
       !cJSON_IsString(statusTopic) ||
       !cJSON_IsString(resultTopic))
    {
-      return false;
+      return FALSE;
    }
 
    mqttConfig->serverIP = mqttStrCopy(serverIP->valuestring);
@@ -63,9 +65,10 @@ bool_t maqttParseHelper(MqttConfig *mqttConfig, cJSON *root)
       !isValidIpAddress(mqttConfig->serverIP))
    {
       free(mqttConfig->serverIP);
-      return false;
+      return FALSE;
    }
 
+   // !! also check if these are valid topics later !!
    mqttConfig->statusTopic = mqttStrCopy(statusTopic->valuestring);
    mqttConfig->messageTopic = mqttStrCopy(resultTopic->valuestring);
    if(!mqttConfig->statusTopic || !mqttConfig->messageTopic)
@@ -73,13 +76,15 @@ bool_t maqttParseHelper(MqttConfig *mqttConfig, cJSON *root)
       free(mqttConfig->serverIP);
       free(mqttConfig->statusTopic);
       free(mqttConfig->messageTopic);
-      return false;
+      return FALSE;
    }
 
+   mqttConfig->mqttEnable = cJSON_GetNumberValue(mqttEnable);
    mqttConfig->serverPort = cJSON_GetNumberValue(serverPort);
    mqttConfig->taskLoopDelay = cJSON_GetNumberValue(loopInterval);
+   mqttConfig->isConfigured = TRUE;
 
-   return true;
+   return TRUE;
 }
 
 // ********************************************************************************************
@@ -95,7 +100,7 @@ bool_t isValidIpAddress(char_t *ipAddress_)
       long value = strtol(part, &endptr, 10);
       if (endptr == part || value < 0 || value > 255) {
          free(ipAddress);
-         return false;
+         return FALSE;
       }
 
       numParts++;

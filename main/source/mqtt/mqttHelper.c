@@ -16,18 +16,20 @@
 // static const char_t *DEFAULT_STATUS_TOPIC = "board/status";
 // static const char_t *DEFAULT_MESSAGE_TOPIC = "board/result";
 
+#include "mqttConfig.h"
+MqttConfig mqttConfig;
+
 static const char *LOG_TAG = "mqtt";
 static bool_t restart = FALSE;
 char_t *messageQueue[MESSAGE_QUEUE_LEN];
 
 static IpAddr serverIpAddr;
-MqttConfig mqttConfig;
 MqttClientContext mqttClientContext;
 
 // ********************************************************************************************
 // forward declaration of functions
 
-void mqttInitConfiguration();
+void mqttInitialize();
 void mqttTask(void *param);
 error_t manualPublishProcess();
 error_t mqttConnect();
@@ -41,7 +43,7 @@ void mqttPublishCallback(MqttClientContext *context,
 
 // ********************************************************************************************
 
-void mqttInitConfiguration()
+void mqttInitialize()
 {
    if (mqttConfig.isConfigured &&
       !mqttConfig.mqttEnable)

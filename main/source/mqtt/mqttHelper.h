@@ -4,7 +4,6 @@
 #include "os_port.h"
 
 typedef struct _MqttConfig MqttConfig;
-extern MqttConfig mqttConfig;
 
 struct _MqttConfig
 {
@@ -17,7 +16,7 @@ struct _MqttConfig
    char_t *messageTopic;
 };
 
-void mqttTask(void *param);
+void mqttInitialize();
 char_t* mqttStrCopy(char_t *str);
 
 #endif

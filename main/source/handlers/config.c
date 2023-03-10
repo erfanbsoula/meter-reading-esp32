@@ -21,8 +21,9 @@ static const char_t *LOG_TAG = "configHandler";
 // ********************************************************************************************
 // forward declaration of functions
 
-error_t configHandler(HttpConnection *connection);
+error_t imgConfigHandler(HttpConnection *connection);
 bool_t sendConfigToK210(ImgConfig *imgConfig);
+error_t mqttConfigHandler(HttpConnection *connection);
 
 // ********************************************************************************************
 
@@ -31,7 +32,7 @@ bool_t sendConfigToK210(ImgConfig *imgConfig);
  * and extracting the config data
  * then sending it to the k210 over UART communication api
  */
-error_t configHandler(HttpConnection *connection)
+error_t imgConfigHandler(HttpConnection *connection)
 {
    if (strcmp(connection->request.method, "POST"))
       return ERROR_NOT_FOUND;

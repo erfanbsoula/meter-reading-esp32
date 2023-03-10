@@ -28,6 +28,6 @@ void initApp()
    // initialize session handler
    initSessionHandler();
 
-   // testing time
-   ESP_LOGI("init", "time = %d", (int32_t)osGetSystemTime());
+   // initialize mqtt client task
+   mqttInitialize();
 }

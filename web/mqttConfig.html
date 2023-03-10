@@ -54,22 +54,26 @@
 						<div>MQTT Settings</div>
 					</div>
 					<form id="mqttSettings">
-						<div class="row-flex center width-full">
-                     <div class="space-right" style="width: 70%;">
+                  <div class="row-flex center width-full" style="margin: 30px 0;">
+                     <div class="space-right row-flex" style="width: 50%;">
+                        <input type='checkbox' id='mqttEnable' name='mqttEnable' class="margin-sides">
+                        <div>MQTT Enable</div>
+                     </div>
+                     <div class="space-left" style="width: 50%;"></div>
+                  </div>
+						<div class="row-flex center width-full space-top">
+                     <div class="" style="width: 45%;">
                         <label for="serverIP">Server IP</label>
                         <input type="text" name="serverIP" id="serverIP">
                      </div>
-                     <div class="space-left" style="width: 30%;">
+                     <div class="margin-sides" style="width: 27%;">
                         <label for="serverPort">Server Port</label>
                         <input type="text" name="serverPort" id="serverPort">
                      </div>
-                  </div>
-                  <div class="row-flex center width-full space-top">
-                     <div class="space-right" style="width: 50%;">
-                        <label for="interval">Publish Interval</label>
+                     <div class="" style="width: 28%;">
+                        <label for="interval">Task Interval</label>
                         <input type="text" name="interval" id="interval">
                      </div>
-                     <div class="space-left" style="width: 50%;"></div>
                   </div>
                   <div class="row-flex center width-full space-top">
                      <div class="space-right" style="width: 50%;">

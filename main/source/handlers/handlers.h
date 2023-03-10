@@ -4,7 +4,8 @@
 #include "core/net.h"
 #include "http/http_server.h"
 
-error_t configHandler(HttpConnection *connection);
+error_t imgConfigHandler(HttpConnection *connection);
+error_t mqttConfigHandler(HttpConnection *connection);
 error_t cameraImgHandler(HttpConnection* connection);
 error_t getAIHandler(HttpConnection *connection);
 

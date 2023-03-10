@@ -44,7 +44,7 @@ function checkFormData(formData) {
         return displayError("invalid server port!");
 
     if (isNaN(parseInt(formData.get('interval'), 10)))
-        return displayError("invalid server port!");
+        return displayError("invalid interval!");
 
     if (!isValidMqttTopic(formData.get('statusTopic')))
         return displayError("invalid topic for status!");
@@ -65,6 +65,8 @@ form.addEventListener('submit', function(event) {
     for (const [key, value] of formData.entries()) {
         data[key] = value;
     }
+    data["mqttEnable"] = Number(
+        formData.get('mqttEnable') == "on");
 
     fetch('/mqttConfig', {
         method: 'POST',
