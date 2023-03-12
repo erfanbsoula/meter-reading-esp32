@@ -92,11 +92,6 @@
 #define APP_IF2_IPV4_ADDR_RANGE_MIN "192.168.8.10"
 #define APP_IF2_IPV4_ADDR_RANGE_MAX "192.168.8.99"
 
-#define APP_IF2_USE_ROUTER_ADV ENABLED
-#define APP_IF2_IPV6_LINK_LOCAL_ADDR "fe80::32:2"
-#define APP_IF2_IPV6_PREFIX "fd00:1:2:3::"
-#define APP_IF2_IPV6_PREFIX_LENGTH 64
-#define APP_IF2_IPV6_GLOBAL_ADDR "fd00:1:2:3::32:2"
 
 //Wi-Fi parameters (STA mode)
 #define APP_WIFI_STA_SSID "IBMCO_Official_plus"
@@ -172,19 +167,15 @@ void app_main(void)
    esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID,
       wifiEventHandler, NULL);
 
-   //TCP/IP stack initialization
+   // TCP/IP stack initialization
    error = netInit();
-   //Any error to report?
    if(error)
-   {
-      // debug message
       TRACE_ERROR("Failed to initialize TCP/IP stack!\r\n");
-   }
 
-   //Configure the first network interface (Ethernet 10/100)
+   // configure first network interface (Ethernet 10/100)
    // ethInterfaceInit();
 
-   //Configure the second network interface (Wi-Fi STA mode)
+   // configure second network interface (Wi-Fi STA mode)
    wifiStaInterfaceInit();
 
    //Configure the third network interface (Wi-Fi AP mode)
