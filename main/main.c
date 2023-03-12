@@ -149,27 +149,26 @@ void app_main(void)
 {
    error_t error;
 
-   //Configure debug UART
+   // configure debug UART
    debugInit(115200);
-
    TRACE_INFO("Compiled: %s %s\r\n", __DATE__, __TIME__);
 
-   //Initialize NVS memory
+   // initialize NVS memory
    esp_err_t err = nvs_flash_init();
    if(err == ESP_ERR_NVS_NO_FREE_PAGES ||
       err == ESP_ERR_NVS_NEW_VERSION_FOUND)
    {
       // NVS partition was truncated and needs to be erased
       ESP_ERROR_CHECK(nvs_flash_erase());
-      // Retry initializing NVS
+      // retry initializing NVS
       err = nvs_flash_init();
    }
    ESP_ERROR_CHECK(err);
 
-   //Create default event loop
+   // create default event loop
    esp_event_loop_create_default();
 
-   //Register Wi-Fi event handler
+   // register Wi-Fi event handler
    esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID,
       wifiEventHandler, NULL);
 
@@ -178,7 +177,7 @@ void app_main(void)
    //Any error to report?
    if(error)
    {
-      //Debug message
+      // debug message
       TRACE_ERROR("Failed to initialize TCP/IP stack!\r\n");
    }
 
@@ -205,7 +204,6 @@ void app_main(void)
    //Set default home page
    strcpy(httpServerSettings.defaultDocument, "index.html");
    //Callback functions
-   httpServerSettings.cgiCallback = httpServerCgiCallback;
    httpServerSettings.requestCallback = httpServerManualRouter;
    httpServerSettings.uriNotFoundCallback = httpServerUriNotFoundCallback;
 

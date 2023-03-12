@@ -1,9 +1,13 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "esp_system.h"
 #include "esp_log.h"
 #include "storage.h"
 
 #include "nvsHelper.h"
 #include "source/utils/imgConfigParser.h"
+#include "source/mqtt/mqttConfigParser.h"
 
 #define LOG_TAG "storage"
 
@@ -21,6 +25,7 @@
 // forward declaration of functions
 
 void retrieveEnvironment(Environment *appEnv);
+void retrieveMqttConfig(MqttConfig *mqttConfig);
 void retrieveUsers(Environment *appEnv);
 void setDefaultUser(User *user, uint_t indx,
    char_t *usernameVar, char_t *passwordVar);
@@ -93,7 +98,7 @@ void setDefaultUser(User *user, uint_t indx,
 
 void retrieveImgConfig(ImgConfig *imgConfig)
 {
-   imgConfig->isConfigured = false;
+   imgConfig->isConfigured = FALSE;
    imgConfig->positions = NULL;
 
    char_t *data;
@@ -106,7 +111,7 @@ void retrieveImgConfig(ImgConfig *imgConfig)
       ESP_LOGE(LOG_TAG,
          "couldn't parse imgConfig during retrieval!");
    }
-   else imgConfig->isConfigured = true;
+   else imgConfig->isConfigured = TRUE;
 
    free(data);
 }
@@ -137,6 +142,31 @@ void retrieveMeterCounter(Environment *appEnv)
    ESP_LOGI(LOG_TAG,
       "meterCounter retrieved successfully (%s)",
       appEnv->meterCounter);
+}
+
+// ********************************************************************************************
+
+void retrieveMqttConfig(MqttConfig *mqttConfig)
+{
+   mqttConfig->isConfigured = FALSE;
+   mqttConfig->mqttEnable = FALSE;
+   mqttConfig->serverIP = NULL;
+   mqttConfig->messageTopic = NULL;
+   mqttConfig->statusTopic = NULL;
+
+   char_t *data;
+   bool_t result = nvsReadString(NVS_mqttConfig_VAR, data);
+   if (!result) return;
+
+   result = parseMqttConfig(mqttConfig, data);
+   if (!result)
+   {
+      ESP_LOGE(LOG_TAG,
+         "couldn't parse mqttConfig during retrieval!");
+   }
+   else mqttConfig->isConfigured = TRUE;
+
+   free(data);
 }
 
 // ********************************************************************************************
