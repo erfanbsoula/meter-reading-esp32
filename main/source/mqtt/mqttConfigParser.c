@@ -39,12 +39,13 @@ bool_t parseMqttConfig(MqttConfig *mqttConfig, char_t *data)
 
 bool_t maqttParseHelper(MqttConfig *mqttConfig, cJSON *root)
 {
-   cJSON *serverPort, *loopInterval, *mqttEnable;
+   cJSON *serverPort, *loopInterval, *mqttEnable, *timeout;
    cJSON *serverIP, *statusTopic, *resultTopic;
 
    mqttEnable = cJSON_GetObjectItem(root, "mqttEnable");
    serverPort = cJSON_GetObjectItem(root, "serverPort");
    loopInterval = cJSON_GetObjectItem(root, "interval");
+   timeout = cJSON_GetObjectItem(root, "timeout");
 
    serverIP = cJSON_GetObjectItem(root, "serverIP");
    statusTopic = cJSON_GetObjectItem(root, "statusTopic");
@@ -53,6 +54,7 @@ bool_t maqttParseHelper(MqttConfig *mqttConfig, cJSON *root)
    if(!cJSON_IsNumber(mqttEnable) ||
       !cJSON_IsNumber(serverPort) ||
       !cJSON_IsNumber(loopInterval) ||
+      !cJSON_IsNumber(timeout) ||
       !cJSON_IsString(serverIP) ||
       !cJSON_IsString(statusTopic) ||
       !cJSON_IsString(resultTopic))
@@ -81,7 +83,8 @@ bool_t maqttParseHelper(MqttConfig *mqttConfig, cJSON *root)
 
    mqttConfig->mqttEnable = cJSON_GetNumberValue(mqttEnable);
    mqttConfig->serverPort = cJSON_GetNumberValue(serverPort);
-   mqttConfig->taskLoopDelay = cJSON_GetNumberValue(loopInterval);
+   mqttConfig->taskInterval = cJSON_GetNumberValue(loopInterval);
+   mqttConfig->timeout = cJSON_GetNumberValue(timeout);
    mqttConfig->isConfigured = TRUE;
 
    return TRUE;

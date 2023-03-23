@@ -11,8 +11,16 @@
 #include "source/storage/storage.h"
 #include "mqttConfig.h"
 
-#define  MQTT_MAIN_TASK_INTERVAL 200
 static const char *LOG_TAG = "mqtt";
+
+#define  MQTT_MAIN_TASK_INTERVAL 200
+MqttClientContext mqttClientContext;
+
+static IpAddr serverIpAddr;
+MqttConfig mqttConfig;
+
+#define MESSAGE_QUEUE_LEN 5
+char_t *messageQueue[MESSAGE_QUEUE_LEN];
 
 // static const char_t *DEFAULT_SERVER_IP = "192.168.8.10";
 // static const uint16_t DEFAULT_SERVER_PORT = 1883;
@@ -20,28 +28,22 @@ static const char *LOG_TAG = "mqtt";
 // static const char_t *DEFAULT_STATUS_TOPIC = "board/status";
 // static const char_t *DEFAULT_MESSAGE_TOPIC = "board/result";
 
-MqttClientContext mqttClientContext;
-MqttConfig mqttConfig;
-static IpAddr serverIpAddr;
-
-char_t *messageQueue[MESSAGE_QUEUE_LEN];
-
 // ********************************************************************************************
 // forward declaration of functions
 
 void mqttInitialize();
 void mqttMainTask(void *param);
 error_t mqttConnect();
-error_t mqttTaskProcess();
-
-void mqttMessageQueueInit();
-bool_t mqttMessageQueuePush(char_t *message);
-void mqttMessageQueuePop();
-char_t* mqttStrCopy(char_t *str);
 
 void mqttPublishCallback(MqttClientContext *context,
    const char_t *topic, const uint8_t *message, size_t length,
    bool_t dup, MqttQosLevel qos, bool_t retain, uint16_t packetId);
+
+error_t mqttProcessMessageQueue();
+void mqttMessageQueueInit();
+bool_t mqttMessageQueuePush(char_t *message);
+void mqttMessageQueuePop();
+char_t* mqttStrCopy(char_t *str);
 
 // ********************************************************************************************
 
@@ -49,10 +51,14 @@ void mqttInitialize()
 {
    retrieveMqttConfig(&mqttConfig);
 
-   if (mqttConfig.isConfigured &&
-      !mqttConfig.mqttEnable)
+   if (!mqttConfig.isConfigured)
    {
-      ESP_LOGI(LOG_TAG, "*! disabled !*");
+      ESP_LOGI(LOG_TAG, "no configuration found!");
+      return;
+   }
+   else if (!mqttConfig.mqttEnable)
+   {
+      ESP_LOGI(LOG_TAG, "mqtt disabled!");
       return;
    }
 
@@ -74,13 +80,6 @@ void mqttMainTask(void *param)
    error_t error;
    bool_t connectionState = FALSE;
 
-   // wait until configuration is loaded
-   while(!mqttConfig.isConfigured)
-   {
-      ESP_LOGI(LOG_TAG, "waiting for configuration ...");
-      osDelayTask(10000);
-   }
-
    while(1)
    {
       if(!connectionState)
@@ -97,14 +96,15 @@ void mqttMainTask(void *param)
       }
       else
       {
-         error = mqttTaskProcess();
+         error = mqttProcessMessageQueue();
          if (error)
          {
             // connection to MQTT server lost?
             mqttClientClose(&mqttClientContext);
             connectionState = FALSE;
          }
-         else mqttClientTask(&mqttClientContext, 100);
+         else mqttClientTask(
+            &mqttClientContext, OS_SYSTICKS_TO_MS(2));
       }
       osDelayTask(MQTT_MAIN_TASK_INTERVAL);
    }
@@ -112,60 +112,39 @@ void mqttMainTask(void *param)
 
 // ********************************************************************************************
 
-error_t mqttTaskProcess()
+error_t mqttConnect()
 {
    error_t error;
 
-   char_t *message = messageQueue[0];
-   if (!message) return NO_ERROR;
-
-   error = mqttClientPublish(
-      &mqttClientContext, mqttConfig.messageTopic, message,
-      strlen(message), MQTT_QOS_LEVEL_1, TRUE, NULL);
-
-   if (!error) mqttMessageQueuePop();
-
-   return error;
-}
-
-// ********************************************************************************************
-
-error_t mqttConnect()
-{
    ipStringToAddr(mqttConfig.serverIP, &serverIpAddr);
-
    mqttClientSetTransportProtocol(
       &mqttClientContext, MQTT_TRANSPORT_PROTOCOL_TCP);
 
-   // mqttClientRegisterPublishCallback(
-   //    &mqttClientContext, mqttPublishCallback);
+   mqttClientSetTimeout(&mqttClientContext, mqttConfig.timeout);
+   mqttClientSetKeepAlive(
+      &mqttClientContext, MQTT_MAIN_TASK_INTERVAL);
+
+   mqttClientRegisterPublishCallback(
+      &mqttClientContext, mqttPublishCallback);
 
    mqttClientSetWillMessage(
       &mqttClientContext, mqttConfig.statusTopic,
       "offline", 7, MQTT_QOS_LEVEL_0, FALSE);
 
-   mqttClientSetTimeout(&mqttClientContext, 10000);
-   mqttClientSetKeepAlive(&mqttClientContext, 0);
-
-   ESP_LOGI(LOG_TAG,
-      "connecting to MQTT server %s...", mqttConfig.serverIP);
-
-   error_t error;
-   do
+   do // exception handling block
    {
       error = mqttClientConnect(&mqttClientContext,
          &serverIpAddr, mqttConfig.serverPort, TRUE);
       if (error) break;
 
       // subscribe to the desired topics
-      // error = mqttClientSubscribe(&mqttClientContext,
-      //    mqttConfig.messageTopic, MQTT_QOS_LEVEL_1, NULL);
-      // if (error) break;
+      error = mqttClientSubscribe(&mqttClientContext,
+         mqttConfig.messageTopic, MQTT_QOS_LEVEL_1, NULL);
+      if (error) break;
 
       error = mqttClientPublish(
          &mqttClientContext, mqttConfig.statusTopic,
          "online", 6, MQTT_QOS_LEVEL_1, TRUE, NULL);
-      if (error) break;
    } 
    while (0);
 
@@ -182,11 +161,30 @@ void mqttPublishCallback(MqttClientContext *context,
    //Check topic name
    if(!strcmp(topic, mqttConfig.messageTopic))
    {
-      char_t* str = (char_t*) malloc(length+1);
+      char_t *str = (char_t*) malloc(length+1);
+      if (!str) return;
       strncpy(str, (char_t *) message, length);
       str[length] = '\0';
       ESP_LOGI(LOG_TAG, "PUBLISH packet received '%s'", str);
    }
+}
+
+// ********************************************************************************************
+
+error_t mqttProcessMessageQueue()
+{
+   error_t error;
+
+   char_t *message = messageQueue[0];
+   if (!message) return NO_ERROR;
+
+   error = mqttClientPublish(
+      &mqttClientContext, mqttConfig.messageTopic, message,
+      strlen(message), MQTT_QOS_LEVEL_1, TRUE, NULL);
+
+   if (!error) mqttMessageQueuePop();
+
+   return error;
 }
 
 // ********************************************************************************************
@@ -206,13 +204,13 @@ bool_t mqttMessageQueuePush(char_t *message)
       if (messageQueue[i] == NULL)
       {
          char_t *mCopy = mqttStrCopy(message);
-         if (!mCopy) return false;
+         if (!mCopy) return FALSE;
 
          messageQueue[i] = mCopy;
-         return true;
+         return TRUE;
       }
    }
-   return false;
+   return FALSE;
 }
 
 // ********************************************************************************************
