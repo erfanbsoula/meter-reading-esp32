@@ -1,13 +1,14 @@
-#include "esp_system.h"
-#include "esp_log.h"
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
 #include "uartHelper.h"
-
 #include "driver/gpio.h"
 #include "driver/uart.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 #include "freertos/task.h"
 #include "freertos/semphr.h"
+#include "esp_log.h"
 
 // this size will be actually allocated and used as the serial buffer:
 // **! make sure you have enough free memory. if not, change the BUFFER_SIZE !**

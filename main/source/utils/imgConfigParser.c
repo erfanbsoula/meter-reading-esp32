@@ -1,10 +1,8 @@
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
-#include "esp_system.h"
-#include "esp_log.h"
 #include "imgConfigParser.h"
-
+#include "esp_log.h"
 #include "cJSON.h"
 
 // ********************************************************************************************

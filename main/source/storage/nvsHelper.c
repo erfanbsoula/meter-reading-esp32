@@ -1,11 +1,8 @@
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include "esp_system.h"
-#include "esp_log.h"
+#include <stdbool.h>
 #include "nvsHelper.h"
-
 #include "nvs_flash.h"
+#include "esp_log.h"
 
 #define LOG_TAG "NVS"
 #define NVS_PAGE_NAME "storage"
@@ -13,11 +10,29 @@
 // ********************************************************************************************
 // forward declaration of functions
 
+void nvsInitialize();
 nvs_handle_t nvsStart();
 bool_t nvsSaveString(char_t *varName, char_t *varValue);
 bool_t nvsReadString(char_t *varName, char_t **varValue);
 char_t* allocateStringMem(nvs_handle_t nvsHandle, char_t *varName);
 bool_t nvsFinish(nvs_handle_t nvsHandle);
+
+// ********************************************************************************************
+
+void nvsInitialize()
+{
+   // initialize NVS memory
+   esp_err_t err = nvs_flash_init();
+   if(err == ESP_ERR_NVS_NO_FREE_PAGES ||
+      err == ESP_ERR_NVS_NEW_VERSION_FOUND)
+   {
+      // NVS partition was truncated and needs to be erased
+      ESP_ERROR_CHECK(nvs_flash_erase());
+      // retry initializing NVS
+      err = nvs_flash_init();
+   }
+   ESP_ERROR_CHECK(err);
+}
 
 // ********************************************************************************************
 

@@ -2,9 +2,10 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DESP32_GATEWAY -D__error_t_defined")
 
 set(COMPONENT_SRCDIRS "."
 	"source"
-	"source/handlers"
 	"source/serial"
+	"source/network"
 	"source/server"
+	"source/server/handlers"
 	"source/storage"
 	"source/mqtt"
 	"source/utils"

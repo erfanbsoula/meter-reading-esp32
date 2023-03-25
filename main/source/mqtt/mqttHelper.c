@@ -1,15 +1,11 @@
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
-#include "esp_system.h"
-#include "esp_log.h"
 #include "mqttHelper.h"
-
 #include "mqtt/mqtt_client.h"
 #include "os_port_freertos.h"
-
 #include "source/storage/storage.h"
-#include "mqttConfig.h"
+#include "esp_log.h"
 
 static const char *LOG_TAG = "mqtt";
 

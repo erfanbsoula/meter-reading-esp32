@@ -18,6 +18,8 @@
 static const uint_t READ_STREAM_BUF_SIZE = 511;
 static const char_t *LOG_TAG = "configHandler";
 
+extern MqttConfig mqttConfig;
+
 // ********************************************************************************************
 // forward declaration of functions
 

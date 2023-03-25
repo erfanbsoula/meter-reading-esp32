@@ -1,7 +1,10 @@
 #ifndef __RESTORE_H__
 #define __RESTORE_H__
 
-#include "../envTypes.h"
+#include "os_port.h"
+#include "nvsHelper.h"
+#include "source/envTypes.h"
+#include "source/mqtt/mqttHelper.h"
 
 void retrieveEnvironment(Environment *appEnv);
 void retrieveMqttConfig(MqttConfig *mqttConfig);

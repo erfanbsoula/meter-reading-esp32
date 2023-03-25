@@ -1,13 +1,10 @@
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
-#include "esp_system.h"
-#include "esp_log.h"
 #include "storage.h"
-
-#include "nvsHelper.h"
 #include "source/utils/imgConfigParser.h"
 #include "source/mqtt/mqttConfigParser.h"
+#include "esp_log.h"
 
 #define LOG_TAG "storage"
 
@@ -155,7 +152,7 @@ void retrieveMqttConfig(MqttConfig *mqttConfig)
    mqttConfig->statusTopic = NULL;
 
    char_t *data;
-   bool_t result = nvsReadString(NVS_mqttConfig_VAR, data);
+   bool_t result = nvsReadString(NVS_mqttConfig_VAR, &data);
    if (!result) return;
 
    result = parseMqttConfig(mqttConfig, data);
