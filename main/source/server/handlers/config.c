@@ -1,19 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "esp_system.h"
-#include "esp_log.h"
 #include "handlers.h"
-
 #include "source/serial/uartHelper.h"
 #include "source/server/httpHelper.h"
+#include "source/appEnv.h"
 #include "source/storage/storage.h"
-
 #include "source/utils/imgConfigParser.h"
 #include "source/mqtt/mqttConfigParser.h"
 #include "source/utils/cJSON.h"
-
-#include "source/appEnv.h"
+#include "esp_log.h"
 
 static const uint_t READ_STREAM_BUF_SIZE = 511;
 static const char_t *LOG_TAG = "configHandler";

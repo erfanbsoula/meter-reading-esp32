@@ -1,18 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "esp_system.h"
-#include "esp_log.h"
 #include "handlers.h"
-
 #include "source/serial/uartHelper.h"
 #include "source/server/httpHelper.h"
 #include "source/appEnv.h"
+#include "esp_log.h"
+
+static const char_t *LOG_TAG = "camera";
 
 // number of bytes to expect when requesing image
 static const size_t TOTAL_SIZE = 76800;
-
-static const char_t *LOG_TAG = "camera";
 
 // ********************************************************************************************
 // forward declaration of functions

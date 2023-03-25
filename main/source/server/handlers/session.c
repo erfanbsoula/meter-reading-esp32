@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "session.h"
-#include "httpHelper.h"
+#include "source/server/httpHelper.h"
 #include "esp_random.h"
 #include "source/appEnv.h"
 #include "esp_log.h"
