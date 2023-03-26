@@ -5,20 +5,30 @@
 #include "esp_err.h"
 #include "error.h"
 
-typedef struct _NetInterfaseSetting NetInterfaseSetting;
+typedef enum _NetworkType NetworkType;
+typedef struct _NetworkConfig NetworkConfig;
 
-struct _NetInterfaseSetting
+enum _NetworkType
 {
-   char_t *interfaceName;
+   staWifi,
+   apWifi,
+   ethernet
+};
+
+struct _NetworkConfig
+{
    char_t *hostName;
    char_t *macAddress;
-   bool_t useDhcpClient;
+   bool_t enableDHCP;
    char_t *hostAddr;
    char_t *subnetMask;
    char_t *defaultGateway;
    char_t *primaryDns;
    char_t *secondaryDns;
+   char_t *minAddrRange;
+   char_t *maxAddrRange;
 };
+
 
 void initializeNetworks();
 

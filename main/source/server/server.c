@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "core/net.h"
+#include "source/network/network.h"
 #include "http/http_server.h"
 #include "server.h"
 #include "httpHelper.h"
@@ -107,6 +108,12 @@ error_t routerHelper(HttpConnection *connection,
 
    if (!strcmp(uri, "/ai"))
       return getAIHandler(connection);
+   
+   if (!strcmp(uri, "/stawifi"))
+      return netConfigHandler(connection, staWifi);
+
+   if (!strcmp(uri, "/apwifi"))
+      return netConfigHandler(connection, apWifi);
 
    return ERROR_NOT_FOUND;
 }

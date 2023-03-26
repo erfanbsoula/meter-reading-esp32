@@ -1,7 +1,10 @@
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <stdbool.h>
 #include <string.h>
 #include "handlers.h"
+#include "source/network/network.h"
+#include "source/utils/netConfigParser.h"
 #include "source/serial/uartHelper.h"
 #include "source/server/httpHelper.h"
 #include "source/appEnv.h"
@@ -13,8 +16,6 @@
 
 static const uint_t READ_STREAM_BUF_SIZE = 511;
 static const char_t *LOG_TAG = "configHandler";
-
-extern MqttConfig mqttConfig;
 
 // ********************************************************************************************
 // forward declaration of functions
@@ -114,21 +115,17 @@ error_t mqttConfigHandler(HttpConnection *connection)
    if (strcmp(connection->request.method, "POST"))
       return ERROR_NOT_FOUND;
 
-   if (!uartAcquire(50))
-      return apiSendRejectionManual(connection);
-
    bool_t parsingResult = FALSE;
+
    char_t *data = (char_t*) malloc(READ_STREAM_BUF_SIZE+1);
-   if (data)
+   MqttConfig *mqttConfigTmp = malloc(sizeof(MqttConfig));
+
+   if (data && mqttConfigTmp)
    {
       size_t length = 0;
       httpReadStream(connection, data, READ_STREAM_BUF_SIZE, &length, 0);
       data[length] = '\0';
-
-      free(mqttConfig.serverIP);
-      free(mqttConfig.statusTopic);
-      free(mqttConfig.messageTopic);
-      parsingResult = parseMqttConfig(&mqttConfig, data);
+      parsingResult = parseMqttConfig(mqttConfigTmp, data);
    }
    else ESP_LOGE(LOG_TAG, "couldn't allocate memory!");
 
@@ -138,8 +135,45 @@ error_t mqttConfigHandler(HttpConnection *connection)
       saveMqttConfigJson(data);
    }
 
-   uartRelease();
    free(data);
+   free(mqttConfigTmp);
+
+   if (parsingResult)
+      return apiSendSuccessManual(connection, "Configs Recieved!");
+
+   return apiSendRejectionManual(connection);
+}
+
+// ********************************************************************************************
+
+error_t netConfigHandler(HttpConnection *connection,
+   NetworkType interface)
+{
+   if (strcmp(connection->request.method, "POST"))
+      return ERROR_NOT_FOUND;
+
+   bool_t parsingResult = FALSE;
+
+   char_t *data = (char_t*) malloc(READ_STREAM_BUF_SIZE+1);
+   NetworkConfig *netConfig = malloc(sizeof(NetworkConfig));
+
+   if (data && netConfig)
+   {
+      size_t length = 0;
+      httpReadStream(connection, data, READ_STREAM_BUF_SIZE, &length, 0);
+      data[length] = '\0';
+      parsingResult = parseNetConfig(netConfig, data, interface);
+   }
+   else ESP_LOGE(LOG_TAG, "couldn't allocate memory!");
+
+   if (parsingResult)
+   {
+      cJSON_Minify(data);
+      saveNetConfigJson(data, interface);
+   }
+
+   free(data);
+   free(netConfig);
 
    if (parsingResult)
       return apiSendSuccessManual(connection, "Configs Recieved!");

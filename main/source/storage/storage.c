@@ -4,6 +4,7 @@
 #include "storage.h"
 #include "source/utils/imgConfigParser.h"
 #include "source/mqtt/mqttConfigParser.h"
+#include "source/utils/netConfigParser.h"
 #include "esp_log.h"
 
 #define LOG_TAG "storage"
@@ -14,6 +15,8 @@
 #define NVS_password_VAR "password#"
 #define NVS_meterCounter_VAR "meterCounter"
 #define NVS_mqttConfig_VAR "mqttConfig"
+#define NVS_staWifiConfig_VAR "staWifiConfig"
+#define NVS_apWifiConfig_VAR "apWifiConfig"
 
 #define DEFAULT_USERNAME "admin#"
 #define DEFAULT_PASSWORD "12345678"
@@ -31,7 +34,7 @@ void retrieveImgConfig(ImgConfig *imgConfig);
 void retrieveMeterCounter(Environment *appEnv);
 bool_t saveImgConfigJson(char_t *imgConfigJson);
 bool_t saveMqttConfigJson(char_t *mqttConfigJson);
-char_t* strCopy(char_t *str, size_t strLen);
+static char_t* strCopy(char_t *str, size_t strLen);
 
 // ********************************************************************************************
 
@@ -168,6 +171,33 @@ void retrieveMqttConfig(MqttConfig *mqttConfig)
 
 // ********************************************************************************************
 
+bool_t retrieveNetConfig(NetworkConfig *netConfig,
+   NetworkType interface)
+{
+   char_t *data;
+   bool_t result = FALSE;
+
+   if (interface == staWifi)
+      result = nvsReadString(NVS_staWifiConfig_VAR, &data);
+   else if (interface == apWifi)
+      result = nvsReadString(NVS_apWifiConfig_VAR, &data);
+   
+   if (!result) return FALSE;
+
+   result = parseNetConfig(netConfig, data, interface);
+   free(data);
+   if (!result)
+   {
+      ESP_LOGE(LOG_TAG,
+         "couldn't parse netConfig during retrieval!");
+      
+      return FALSE;
+   }
+   return TRUE;
+}
+
+// ********************************************************************************************
+
 bool_t saveImgConfigJson(char_t *imgConfigJson)
 {
    return nvsSaveString(NVS_imgConfig_VAR, imgConfigJson);
@@ -178,9 +208,21 @@ bool_t saveMqttConfigJson(char_t *mqttConfigJson)
    return nvsSaveString(NVS_mqttConfig_VAR, mqttConfigJson);
 }
 
+bool_t saveNetConfigJson(char_t *netConfigJson,
+   NetworkType interface)
+{
+   if (interface == staWifi)
+      return nvsSaveString(NVS_staWifiConfig_VAR, netConfigJson);
+
+   if (interface == apWifi)
+      return nvsSaveString(NVS_apWifiConfig_VAR, netConfigJson);
+
+   return FALSE;
+}
+
 // ********************************************************************************************
 
-char_t* strCopy(char_t *str, size_t memLen)
+static char_t* strCopy(char_t *str, size_t memLen)
 {
    char_t *strCopied = (char_t*) malloc(memLen);
    if (strCopied == NULL) {

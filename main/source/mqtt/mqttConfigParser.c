@@ -9,13 +9,16 @@
 // forward declaration of functions
 
 bool_t parseMqttConfig(MqttConfig *mqttConfig, char_t *data);
-bool_t maqttParseHelper(MqttConfig *mqttConfig, cJSON *root);
+bool_t mqttParseHelper(MqttConfig *mqttConfig, cJSON *root);
 bool_t isValidIpAddress(char_t *ipAddress_);
 
 // ********************************************************************************************
 
 bool_t parseMqttConfig(MqttConfig *mqttConfig, char_t *data)
 {
+   if (mqttConfig == NULL)
+      return FALSE;
+
    cJSON* root = cJSON_Parse(data);
    if (root == NULL)
    {
@@ -27,7 +30,7 @@ bool_t parseMqttConfig(MqttConfig *mqttConfig, char_t *data)
       return FALSE;
    }
 
-   bool_t res = maqttParseHelper(mqttConfig, root);   
+   bool_t res = mqttParseHelper(mqttConfig, root);   
 
    cJSON_Delete(root);
    return res;
@@ -35,7 +38,7 @@ bool_t parseMqttConfig(MqttConfig *mqttConfig, char_t *data)
 
 // ********************************************************************************************
 
-bool_t maqttParseHelper(MqttConfig *mqttConfig, cJSON *root)
+bool_t mqttParseHelper(MqttConfig *mqttConfig, cJSON *root)
 {
    cJSON *serverPort, *loopInterval, *mqttEnable, *timeout;
    cJSON *serverIP, *statusTopic, *resultTopic;

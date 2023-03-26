@@ -1,5 +1,5 @@
-#ifndef __AI_CONFIG_PARSER__
-#define __AI_CONFIG_PARSER__
+#ifndef __IMG_CONFIG_PARSER__
+#define __IMG_CONFIG_PARSER__
 
 #include "source/envTypes.h"
 

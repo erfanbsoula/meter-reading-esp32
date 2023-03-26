@@ -10,7 +10,7 @@
 #include "debug.h"
 
 // ethernet interface configuration
-#define APP_IF0_NAME "ethernet"
+#define APP_IF0_NAME "eth"
 #define APP_IF0_HOST_NAME "http-server"
 #define APP_IF0_MAC_ADDR "00-AB-CD-EF-32-00"
 
