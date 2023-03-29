@@ -14,37 +14,19 @@
 // second Wi-Fi interface (AP mode)
 #define APP_IF2_NAME "wlan1"
 
-static const NetInterfaceConfig AP_CONFIG =
-{
-   .hostName = "http-server",
-   .macAddress = "00-00-00-00-00-00",
-   .enableDHCP = TRUE,
-   .hostAddr = "192.168.8.1",
-   .subnetMask = "255.255.255.0",
-   .defaultGateway = "0.0.0.0",
-   .primaryDns = "0.0.0.0",
-   .secondaryDns = "0.0.0.0",
-   .minAddrRange = "192.168.8.10",
-   .maxAddrRange = "192.168.8.99",
-   .SSID = "ESP32_AP",
-   .password = "test1234",
-};
-
-// #define APP_IF2_HOST_NAME "http-server-demo"
-// #define APP_IF2_MAC_ADDR "00-00-00-00-00-00"
-
-// #define APP_IF2_USE_DHCP_SERVER ENABLED
-// #define APP_IF2_IPV4_HOST_ADDR "192.168.8.1"
-// #define APP_IF2_IPV4_SUBNET_MASK "255.255.255.0"
-// #define APP_IF2_IPV4_DEFAULT_GATEWAY "0.0.0.0"
-// #define APP_IF2_IPV4_PRIMARY_DNS "0.0.0.0"
-// #define APP_IF2_IPV4_SECONDARY_DNS "0.0.0.0"
-// #define APP_IF2_IPV4_ADDR_RANGE_MIN "192.168.8.10"
-// #define APP_IF2_IPV4_ADDR_RANGE_MAX "192.168.8.99"
-
-// Wi-Fi parameters (AP mode)
-// #define APP_WIFI_AP_SSID "ESP32_AP"
-// #define APP_WIFI_AP_PASSWORD "test1234"
+char_t DEFAULT_AP_CONFIG_JSON[] = "{"
+   "\"hostName\":\"http-server\","
+   "\"macAddress\":\"00-00-00-00-00-00\","
+   "\"enableDHCP\":1,"
+   "\"hostAddr\":\"192.168.8.1\","
+   "\"subnetMask\":\"255.255.255.0\","
+   "\"defaultGateway\":\"0.0.0.0\","
+   "\"primaryDns\":\"0.0.0.0\","
+   "\"secondaryDns\":\"0.0.0.0\","
+   "\"minAddrRange\":\"192.168.8.10\","
+   "\"maxAddrRange\":\"192.168.8.99\","
+   "\"SSID\":\"ESP32_AP\","
+   "\"password\":\"test1234\"}";
 
 #if (IPV6_SUPPORT == ENABLED)
 
@@ -81,7 +63,11 @@ error_t wifiApInterfaceInit()
    bool_t result;
 
    result = retrieveNetConfig(&ifConfig, AP_WIFI_INTERFACE);
-   if (!result) ifConfig = AP_CONFIG; // load default config
+   if (!result) {
+      TRACE_ERROR("Failed to load %s configuration!\n",
+         APP_IF2_NAME);
+      return ERROR_FAILURE;
+   }
 
    // third network interface (Wi-Fi AP mode)
    NetInterface *interface = &netInterface[2];

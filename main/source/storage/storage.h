@@ -18,4 +18,6 @@ bool_t saveNetConfigJson(char_t *netConfigJson,
 bool_t retrieveNetConfig(NetInterfaceConfig *netConfig,
    NetInterfaceType interface);
 
+char_t* getNetConfigJson(NetInterfaceType interface);
+
 #endif

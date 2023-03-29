@@ -175,17 +175,29 @@ bool_t retrieveNetConfig(NetInterfaceConfig *netConfig,
    NetInterfaceType interface)
 {
    char_t *data;
-   bool_t result = FALSE;
+   bool_t result, deallocate = TRUE;
 
-   if (interface == STA_WIFI_INTERFACE)
+   if (interface == STA_WIFI_INTERFACE) {
       result = nvsReadString(NVS_staWifiConfig_VAR, &data);
-   else if (interface == AP_WIFI_INTERFACE)
+      if (!result) {
+         data = DEFAULT_STA_CONFIG_JSON;
+         nvsSaveString(NVS_staWifiConfig_VAR, data);
+         deallocate = FALSE;
+      }
+   }
+   else if (interface == AP_WIFI_INTERFACE) {
       result = nvsReadString(NVS_apWifiConfig_VAR, &data);
-   
-   if (!result) return FALSE;
+      if (!result) {
+         data = DEFAULT_AP_CONFIG_JSON;
+         nvsSaveString(NVS_apWifiConfig_VAR, data);
+         deallocate = FALSE;
+      }
+   }
+   else return FALSE;
 
    result = parseNetConfig(netConfig, data, interface);
-   free(data);
+   if (deallocate) free(data);
+
    if (!result)
    {
       ESP_LOGE(LOG_TAG,
@@ -218,6 +230,21 @@ bool_t saveNetConfigJson(char_t *netConfigJson,
       return nvsSaveString(NVS_apWifiConfig_VAR, netConfigJson);
 
    return FALSE;
+}
+
+char_t* getNetConfigJson(NetInterfaceType interface)
+{
+   char_t *data;
+   bool_t result = FALSE;
+
+   if (interface == STA_WIFI_INTERFACE)
+      result = nvsReadString(NVS_staWifiConfig_VAR, &data);
+   else if (interface == AP_WIFI_INTERFACE)
+      result = nvsReadString(NVS_apWifiConfig_VAR, &data);
+
+   if (!result) return NULL;
+
+   return data;
 }
 
 // ********************************************************************************************

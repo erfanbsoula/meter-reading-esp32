@@ -5,7 +5,7 @@
 #include "esp_log.h"
 #include "cJSON.h"
 
-static const char *LOG_TAG = "netConfig";
+// static const char *LOG_TAG = "netConfig";
 
 // ********************************************************************************************
 // forward declaration of functions
@@ -20,7 +20,7 @@ static bool_t getStrItem(char_t **str, cJSON *root,
    const char_t *item);
 
 static void freeNetConfigStrs(NetInterfaceConfig *netConfig);
-static char_t* strCopy(char_t *str);
+// static char_t* strCopy(char_t *str);
 
 // ********************************************************************************************
 
@@ -56,7 +56,6 @@ bool_t netConfigParseHelper(NetInterfaceConfig *netConfig, cJSON *root,
     NetInterfaceType interface)
 {
    cJSON *child;
-   bool_t result;
 
    if(!getStrItem(&netConfig->hostName, root, "hostName") ||
       !getStrItem(&netConfig->macAddress, root, "macAddress"))
@@ -138,15 +137,15 @@ static void freeNetConfigStrs(NetInterfaceConfig *netConfig)
 
 // ********************************************************************************************
 
-static char_t* strCopy(char_t *str)
-{
-   char_t *strCopied = malloc(strlen(str) + 1);
-   if (strCopied == NULL) {
-      ESP_LOGE(LOG_TAG, "memory allocation failed!");
-      return NULL;
-   }
-   strcpy(strCopied, str);
-   return strCopied;
-}
+// static char_t* strCopy(char_t *str)
+// {
+//    char_t *strCopied = malloc(strlen(str) + 1);
+//    if (strCopied == NULL) {
+//       ESP_LOGE(LOG_TAG, "memory allocation failed!");
+//       return NULL;
+//    }
+//    strcpy(strCopied, str);
+//    return strCopied;
+// }
 
 // ********************************************************************************************

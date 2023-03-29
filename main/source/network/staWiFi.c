@@ -14,35 +14,17 @@
 // first Wi-Fi interface (STA mode) configuration
 #define APP_IF1_NAME "wlan0"
 
-static const NetInterfaceConfig STA_CONFIG =
-{
-   .hostName = "http-server",
-   .macAddress = "00-00-00-00-00-00",
-   .enableDHCP = TRUE,
-   .hostAddr = "192.168.0.20",
-   .subnetMask = "255.255.255.0",
-   .defaultGateway = "192.168.0.254",
-   .primaryDns = "8.8.8.8",
-   .secondaryDns = "8.8.4.4",
-   .minAddrRange = NULL,
-   .maxAddrRange = NULL,
-   .SSID = "IBMCO_Official_plus",
-   .password = "@88281228@ibmco",
-};
-
-// #define APP_IF1_HOST_NAME "http-server"
-// #define APP_IF1_MAC_ADDR "00-00-00-00-00-00"
-
-// #define APP_IF1_USE_DHCP_CLIENT ENABLED
-// #define APP_IF1_IPV4_HOST_ADDR "192.168.0.20"
-// #define APP_IF1_IPV4_SUBNET_MASK "255.255.255.0"
-// #define APP_IF1_IPV4_DEFAULT_GATEWAY "192.168.0.254"
-// #define APP_IF1_IPV4_PRIMARY_DNS "8.8.8.8"
-// #define APP_IF1_IPV4_SECONDARY_DNS "8.8.4.4"
-
-//Wi-Fi parameters (STA mode)
-// #define APP_WIFI_STA_SSID "IBMCO_Official_plus"
-// #define APP_WIFI_STA_PASSWORD "@88281228@ibmco"
+char_t DEFAULT_STA_CONFIG_JSON[] = "{"
+   "\"hostName\":\"http-server\","
+   "\"macAddress\":\"00-00-00-00-00-00\","
+   "\"enableDHCP\":1,"
+   "\"hostAddr\":\"192.168.0.20\","
+   "\"subnetMask\":\"255.255.255.0\","
+   "\"defaultGateway\":\"192.168.0.254\","
+   "\"primaryDns\":\"8.8.8.8\","
+   "\"secondaryDns\":\"8.8.4.4\","
+   "\"SSID\":\"IBMCO_Official_plus\","
+   "\"password\":\"@88281228@ibmco\"}";
 
 #if (IPV6_SUPPORT == ENABLED)
 
@@ -75,7 +57,11 @@ error_t wifiStaInterfaceInit()
    bool_t result;
 
    result = retrieveNetConfig(&ifConfig, STA_WIFI_INTERFACE);
-   if (!result) ifConfig = STA_CONFIG; // load default config
+   if (!result) {
+      TRACE_ERROR("Failed to load %s configuration!\n",
+         APP_IF1_NAME);
+      return ERROR_FAILURE;
+   }
 
    // second network interface (Wi-Fi STA mode)
    NetInterface *interface = &netInterface[1];

@@ -8,6 +8,9 @@
 typedef enum _NetInterfaceType NetInterfaceType;
 typedef struct _NetInterfaceConfig NetInterfaceConfig;
 
+extern char_t DEFAULT_AP_CONFIG_JSON[];
+extern char_t DEFAULT_STA_CONFIG_JSON[];
+
 enum _NetInterfaceType
 {
    ETHERNET_INTERFACE,

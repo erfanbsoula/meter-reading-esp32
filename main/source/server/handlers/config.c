@@ -149,6 +149,13 @@ error_t mqttConfigHandler(HttpConnection *connection)
 error_t netConfigHandler(HttpConnection *connection,
    NetInterfaceType interface)
 {
+   if (!strcmp(connection->request.method, "GET"))
+   {
+      char_t *data = getNetConfigJson(interface);
+      if (!data) return apiSendRejectionManual(connection);
+      return httpSendJsonAndFreeManual(connection, 200, data);
+   }
+
    if (strcmp(connection->request.method, "POST"))
       return ERROR_NOT_FOUND;
 

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+   <title>ESP32</title>
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+   <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+<!-- **************************************************************************************************** -->
+<!-- header -->
+<header class="width-full">
+   <div class="row-flex center">
+      <div class="space-left" id="menu-btn">
+         <span></span>
+         <span></span>
+         <span></span>
+         <span></span>
+      </div>
+      <div id="header-title">IBMCO</div>
+   </div>
+   <img src="assets/ai.png" alt="icon" class="header-img">
+</header>
+<!-- **************************************************************************************************** -->
+<div class="width-full row-flex">
+<!-- **************************************************************************************************** -->
+<!-- sidebar -->
+   <div id="sidebar">
+      <div id="sidebar-content-container">
+         <nav id="navbar">
+            <div onclick="window.location.href = 'index.html';" class="nav-item">
+               <div class="pointer"></div>
+               <div class="space-left">Home</div>
+            </div>
+            <div onclick="window.location.href = 'changePass.html';" class="nav-item">
+               <div class="pointer"></div>
+               <div class="space-left">Change Password</div>
+            </div>
+         </nav>
+         <div class="exit">
+            <img src="assets/logout.png" alt="">
+            <div class="space-left">logout</div>
+         </div>
+      </div>
+   </div>
+<!-- **************************************************************************************************** -->
+   <div class="width-full" id="content-container">
+      <main>
+			<div class="form-container">
+				<div class="form-card" style="width: 700px; margin-top: 50px;">
+					<div class="form-header">
+						<div>AP WiFi Config</div>
+					</div>
+					<form id="apWifiConfig">
+                  <div class="row-flex center width-full" style="margin: 30px 0;">
+                     <div class="space-right row-flex" style="width: 100%;">
+                        <input type='checkbox' id='apEnableDHCP' name='enableDHCP' class="margin-sides">
+                        <div>Enable DHCP Server</div>
+                     </div>
+                  </div>
+                  <div class="row-flex center width-full space-top">
+                     <div class="" style="width: 33%;">
+                        <label for="apHostName">host name</label>
+                        <input type="text" name="hostName" id="apHostName">
+                     </div>
+                     <div class="margin-sides" style="width: 33%;">
+                        <label for="apMacAddress">mac address</label>
+                        <input type="text" name="macAddress" id="apMacAddress">
+                     </div>
+                     <div class="" style="width: 33%;">
+                        <label for="apHostAddr">host address</label>
+                        <input type="text" name="hostAddr" id="apHostAddr">
+                     </div>
+                  </div>
+                  <div class="row-flex center width-full space-top">
+                     <div class="" style="width: 33%;">
+                        <label for="apSubnetMask">subnet mask</label>
+                        <input type="text" name="subnetMask" id="apSubnetMask">
+                     </div>
+                     <div class="margin-sides" style="width: 33%;">
+                        <label for="apDefaultGateway">default gateway</label>
+                        <input type="text" name="defaultGateway" id="apDefaultGateway">
+                     </div>
+                     <div class="" style="width: 33%;">
+                        <label for="apPrimaryDns">primary DNS</label>
+                        <input type="text" name="primaryDns" id="apPrimaryDns">
+                     </div>
+                  </div>
+                  <div class="row-flex center width-full space-top">
+                     <div class="" style="width: 33%;">
+                        <label for="apSecondaryDns">secondary DNS</label>
+                        <input type="text" name="secondaryDns" id="apSecondaryDns">
+                     </div>
+                     <div class="margin-sides" style="width: 33%;">
+                        <label for="apMinAddrRange">min address range</label>
+                        <input type="text" name="minAddrRange" id="apMinAddrRange">
+                     </div>
+                     <div class="" style="width: 33%;">
+                        <label for="apMaxAddrRange">max address range</label>
+                        <input type="text" name="maxAddrRange" id="apMaxAddrRange">
+                     </div>
+                  </div>
+                  <div class="row-flex center width-full space-top">
+                     <div class="" style="width: 33%;">
+                        <label for="apSSID">SSID</label>
+                        <input type="text" name="SSID" id="apSSID">
+                     </div>
+                     <div class="margin-sides" style="width: 33%;">
+                        <label for="apPassword">password</label>
+                        <input type="text" name="password" id="apPassword">
+                     </div>
+                     <div class="" style="width: 33%;"></div>
+                  </div>
+                  <br>
+                  <div class="width-full row-flex center" style="margin-bottom: 25px;">
+                     <div id="apErrorBox" class="error-message width-full"></div>
+                     <input type="submit" class="button-gradient" value="send" style="margin-bottom: 0px;">
+                  </div>
+					</form>
+				</div>
+            <div class="form-card" style="width: 700px; margin-top: 50px;">
+					<div class="form-header">
+						<div>STA WiFi Config</div>
+					</div>
+					<form id="staWifiConfig">
+                  <div class="row-flex center width-full" style="margin: 30px 0;">
+                     <div class="space-right row-flex" style="width: 100%;">
+                        <input type='checkbox' id='staEnableDHCP' name='enableDHCP' class="margin-sides">
+                        <div>Enable DHCP Client</div>
+                     </div>
+                  </div>
+                  <div class="row-flex center width-full space-top">
+                     <div class="" style="width: 33%;">
+                        <label for="staHostName">host name</label>
+                        <input type="text" name="hostName" id="staHostName">
+                     </div>
+                     <div class="margin-sides" style="width: 33%;">
+                        <label for="staMacAddress">mac address</label>
+                        <input type="text" name="macAddress" id="staMacAddress">
+                     </div>
+                     <div class="" style="width: 33%;">
+                        <label for="staHostAddr">host address</label>
+                        <input type="text" name="hostAddr" id="staHostAddr">
+                     </div>
+                  </div>
+                  <div class="row-flex center width-full space-top">
+                     <div class="" style="width: 33%;">
+                        <label for="staSubnetMask">subnet mask</label>
+                        <input type="text" name="subnetMask" id="staSubnetMask">
+                     </div>
+                     <div class="margin-sides" style="width: 33%;">
+                        <label for="staDefaultGateway">default gateway</label>
+                        <input type="text" name="defaultGateway" id="staDefaultGateway">
+                     </div>
+                     <div class="" style="width: 33%;">
+                        <label for="staPrimaryDns">primary DNS</label>
+                        <input type="text" name="primaryDns" id="staPrimaryDns">
+                     </div>
+                  </div>
+                  <div class="row-flex center width-full space-top">
+                     <div class="" style="width: 33%;">
+                        <label for="staSecondaryDns">secondary DNS</label>
+                        <input type="text" name="secondaryDns" id="staSecondaryDns">
+                     </div>
+                     <div class="margin-sides" style="width: 33%;">
+                        <label for="staSSID">SSID</label>
+                        <input type="text" name="SSID" id="staSSID">
+                     </div>
+                     <div class="" style="width: 33%;">
+                        <label for="staPassword">password</label>
+                        <input type="text" name="password" id="staPassword">
+                     </div>
+                  </div>
+                  <br>
+                  <div class="width-full row-flex center" style="margin-bottom: 25px;">
+                     <div id="staErrorBox" class="error-message width-full"></div>
+                     <input type="submit" class="button-gradient" value="send" style="margin-bottom: 0px;">
+                  </div>
+					</form>
+				</div>
+			</div>
+         <br><br><br>
+		</main>
+   </div>
+</div>
+<!-- **************************************************************************************************** -->
+</div>
+</body>
+
+<script src="sidebar-menu.js"></script>
+<script src="netConfig.js"></script>
+</html>
