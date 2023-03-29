@@ -10,20 +10,23 @@ static const char *LOG_TAG = "netConfig";
 // ********************************************************************************************
 // forward declaration of functions
 
-bool_t parseNetConfig(NetworkConfig *netConfig, char_t *data,
-   NetworkType interface);
+bool_t parseNetConfig(NetInterfaceConfig *netConfig, char_t *data,
+   NetInterfaceType interface);
 
-bool_t netConfigParseHelper(NetworkConfig *netConfig, cJSON *root,
-   NetworkType interface);
+bool_t netConfigParseHelper(NetInterfaceConfig *netConfig, cJSON *root,
+   NetInterfaceType interface);
 
-static void freeNetConfigStrs(NetworkConfig *netConfig);
+static bool_t getStrItem(char_t **str, cJSON *root,
+   const char_t *item);
+
+static void freeNetConfigStrs(NetInterfaceConfig *netConfig);
 static char_t* strCopy(char_t *str);
 
 // ********************************************************************************************
 
 
-bool_t parseNetConfig(NetworkConfig *netConfig, char_t *data,
-    NetworkType interface)
+bool_t parseNetConfig(NetInterfaceConfig *netConfig, char_t *data,
+    NetInterfaceType interface)
 {
    if (netConfig == NULL)
       return FALSE;
@@ -39,7 +42,7 @@ bool_t parseNetConfig(NetworkConfig *netConfig, char_t *data,
       return FALSE;
    }
 
-   osMemset(netConfig, 0, sizeof(NetworkConfig));
+   osMemset(netConfig, 0, sizeof(NetInterfaceConfig));
    bool_t res = netConfigParseHelper(netConfig, root, interface);
    if (!res) freeNetConfigStrs(netConfig);
 
@@ -49,77 +52,53 @@ bool_t parseNetConfig(NetworkConfig *netConfig, char_t *data,
 
 // ********************************************************************************************
 
-bool_t netConfigParseHelper(NetworkConfig *netConfig, cJSON *root,
-    NetworkType interface)
+bool_t netConfigParseHelper(NetInterfaceConfig *netConfig, cJSON *root,
+    NetInterfaceType interface)
 {
-   cJSON *hostName, *macAddress, *enableDHCP, *hostAddr;
-   cJSON *subnetMask, *defaultGateway, *primaryDns;
-   cJSON *secondaryDns, *minAddrRange, *maxAddrRange;
+   cJSON *child;
+   bool_t result;
 
-   hostName = cJSON_GetObjectItem(root, "hostName");
-   macAddress = cJSON_GetObjectItem(root, "macAddress");
-   enableDHCP = cJSON_GetObjectItem(root, "enableDHCP");
-
-   if(!cJSON_IsString(hostName) ||
-      !cJSON_IsString(macAddress) ||
-      !cJSON_IsNumber(enableDHCP))
+   if(!getStrItem(&netConfig->hostName, root, "hostName") ||
+      !getStrItem(&netConfig->macAddress, root, "macAddress"))
    {
       return FALSE;
    }
 
-   netConfig->hostName = strCopy(hostName->valuestring);
-   if (!netConfig->hostName) return FALSE;
-   netConfig->macAddress = strCopy(macAddress->valuestring);
-   if (!netConfig->macAddress) return FALSE;
-
-   netConfig->enableDHCP = cJSON_GetNumberValue(enableDHCP);
-
+   child = cJSON_GetObjectItem(root, "enableDHCP");
+   if (!cJSON_IsNumber(child)) return FALSE;
+   netConfig->enableDHCP = cJSON_GetNumberValue(child);
    if (!netConfig->enableDHCP)
    {
       return TRUE;
    }
 
-   hostAddr = cJSON_GetObjectItem(root, "hostAddr");
-   subnetMask = cJSON_GetObjectItem(root, "subnetMask");
-   defaultGateway = cJSON_GetObjectItem(root, "defaultGateway");
-   primaryDns = cJSON_GetObjectItem(root, "primaryDns");
-   secondaryDns = cJSON_GetObjectItem(root, "secondaryDns");
 
-   if(!cJSON_IsString(hostAddr) ||
-      !cJSON_IsString(subnetMask) ||
-      !cJSON_IsString(defaultGateway) ||
-      !cJSON_IsString(primaryDns) ||
-      !cJSON_IsString(secondaryDns))
+   if(!getStrItem(&netConfig->hostAddr, root, "hostAddr") ||
+      !getStrItem(&netConfig->subnetMask, root, "subnetMask") ||
+      !getStrItem(&netConfig->defaultGateway, root, "defaultGateway") ||
+      !getStrItem(&netConfig->primaryDns, root, "primaryDns") ||
+      !getStrItem(&netConfig->secondaryDns, root, "secondaryDns"))
    {
       return FALSE;
    }
 
-   netConfig->hostAddr = strCopy(hostAddr->valuestring);
-   if (!netConfig->hostAddr) return FALSE;
-   netConfig->subnetMask = strCopy(subnetMask->valuestring);
-   if (!netConfig->subnetMask) return FALSE;
-   netConfig->defaultGateway = strCopy(defaultGateway->valuestring);
-   if (!netConfig->defaultGateway) return FALSE;
-   netConfig->primaryDns = strCopy(primaryDns->valuestring);
-   if (!netConfig->primaryDns) return FALSE;
-   netConfig->secondaryDns = strCopy(secondaryDns->valuestring);
-   if (!netConfig->secondaryDns) return FALSE;
-
-   if (interface == apWifi)
+   if (interface == AP_WIFI_INTERFACE)
    {
-      minAddrRange = cJSON_GetObjectItem(root, "minAddrRange");
-      maxAddrRange = cJSON_GetObjectItem(root, "maxAddrRange");
-
-      if(!cJSON_IsString(minAddrRange) ||
-         !cJSON_IsString(maxAddrRange))
+      if(!getStrItem(&netConfig->minAddrRange, root, "minAddrRange") ||
+         !getStrItem(&netConfig->maxAddrRange, root, "maxAddrRange"))
       {
          return FALSE;
       }
+   }
 
-      netConfig->minAddrRange = strCopy(minAddrRange->valuestring);
-      if (!netConfig->minAddrRange) return FALSE;
-      netConfig->maxAddrRange = strCopy(maxAddrRange->valuestring);
-      if (!netConfig->maxAddrRange) return FALSE;
+   if(interface == AP_WIFI_INTERFACE ||
+      interface == STA_WIFI_INTERFACE)
+   {
+      if(!getStrItem(&netConfig->SSID, root, "SSID") ||
+         !getStrItem(&netConfig->password, root, "password"))
+      {
+         return FALSE;
+      }
    }
 
    return TRUE;
@@ -127,7 +106,22 @@ bool_t netConfigParseHelper(NetworkConfig *netConfig, cJSON *root,
 
 // ********************************************************************************************
 
-static void freeNetConfigStrs(NetworkConfig *netConfig)
+static bool_t getStrItem(char_t **str, cJSON *root,
+   const char_t *item)
+{
+   cJSON *child;
+   child = cJSON_GetObjectItem(root, item);
+
+   if (!cJSON_IsString(child)) return FALSE;
+
+   *str = child->valuestring;
+   child->valuestring = NULL;
+   return TRUE;
+}
+
+// ********************************************************************************************
+
+static void freeNetConfigStrs(NetInterfaceConfig *netConfig)
 {
    free(netConfig->hostName);
    free(netConfig->macAddress);
@@ -138,6 +132,8 @@ static void freeNetConfigStrs(NetworkConfig *netConfig)
    free(netConfig->secondaryDns);
    free(netConfig->minAddrRange);
    free(netConfig->maxAddrRange);
+   free(netConfig->SSID);
+   free(netConfig->password);
 }
 
 // ********************************************************************************************

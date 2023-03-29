@@ -11,6 +11,6 @@ error_t cameraImgHandler(HttpConnection* connection);
 error_t getAIHandler(HttpConnection *connection);
 
 error_t netConfigHandler(HttpConnection *connection,
-   NetworkType interface);
+   NetInterfaceType interface);
 
 #endif

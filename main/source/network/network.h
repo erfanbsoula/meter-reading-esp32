@@ -5,17 +5,17 @@
 #include "esp_err.h"
 #include "error.h"
 
-typedef enum _NetworkType NetworkType;
-typedef struct _NetworkConfig NetworkConfig;
+typedef enum _NetInterfaceType NetInterfaceType;
+typedef struct _NetInterfaceConfig NetInterfaceConfig;
 
-enum _NetworkType
+enum _NetInterfaceType
 {
-   staWifi,
-   apWifi,
-   ethernet
+   ETHERNET_INTERFACE,
+   STA_WIFI_INTERFACE,
+   AP_WIFI_INTERFACE,
 };
 
-struct _NetworkConfig
+struct _NetInterfaceConfig
 {
    char_t *hostName;
    char_t *macAddress;
@@ -27,8 +27,9 @@ struct _NetworkConfig
    char_t *secondaryDns;
    char_t *minAddrRange;
    char_t *maxAddrRange;
+   char_t *SSID;
+   char_t *password;
 };
-
 
 void initializeNetworks();
 

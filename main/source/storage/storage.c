@@ -171,15 +171,15 @@ void retrieveMqttConfig(MqttConfig *mqttConfig)
 
 // ********************************************************************************************
 
-bool_t retrieveNetConfig(NetworkConfig *netConfig,
-   NetworkType interface)
+bool_t retrieveNetConfig(NetInterfaceConfig *netConfig,
+   NetInterfaceType interface)
 {
    char_t *data;
    bool_t result = FALSE;
 
-   if (interface == staWifi)
+   if (interface == STA_WIFI_INTERFACE)
       result = nvsReadString(NVS_staWifiConfig_VAR, &data);
-   else if (interface == apWifi)
+   else if (interface == AP_WIFI_INTERFACE)
       result = nvsReadString(NVS_apWifiConfig_VAR, &data);
    
    if (!result) return FALSE;
@@ -209,12 +209,12 @@ bool_t saveMqttConfigJson(char_t *mqttConfigJson)
 }
 
 bool_t saveNetConfigJson(char_t *netConfigJson,
-   NetworkType interface)
+   NetInterfaceType interface)
 {
-   if (interface == staWifi)
+   if (interface == STA_WIFI_INTERFACE)
       return nvsSaveString(NVS_staWifiConfig_VAR, netConfigJson);
 
-   if (interface == apWifi)
+   if (interface == AP_WIFI_INTERFACE)
       return nvsSaveString(NVS_apWifiConfig_VAR, netConfigJson);
 
    return FALSE;

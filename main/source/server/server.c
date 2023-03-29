@@ -110,10 +110,10 @@ error_t routerHelper(HttpConnection *connection,
       return getAIHandler(connection);
    
    if (!strcmp(uri, "/stawifi"))
-      return netConfigHandler(connection, staWifi);
+      return netConfigHandler(connection, STA_WIFI_INTERFACE);
 
    if (!strcmp(uri, "/apwifi"))
-      return netConfigHandler(connection, apWifi);
+      return netConfigHandler(connection, AP_WIFI_INTERFACE);
 
    return ERROR_NOT_FOUND;
 }

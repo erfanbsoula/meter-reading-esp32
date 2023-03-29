@@ -3,6 +3,7 @@
 #include "esp_wifi.h"
 #include "core/net.h"
 #include "network.h"
+#include "source/storage/storage.h"
 #include "drivers/wifi/esp32_wifi_driver.h"
 #include "dhcp/dhcp_client.h"
 #include "ipv6/slaac.h"
@@ -10,19 +11,42 @@
 #include "esp_log.h"
 #include "debug.h"
 
-//Second Wi-Fi interface (AP mode) configuration
+// second Wi-Fi interface (AP mode)
 #define APP_IF2_NAME "wlan1"
-#define APP_IF2_HOST_NAME "http-server-demo"
-#define APP_IF2_MAC_ADDR "00-00-00-00-00-00"
 
-#define APP_IF2_USE_DHCP_SERVER ENABLED
-#define APP_IF2_IPV4_HOST_ADDR "192.168.8.1"
-#define APP_IF2_IPV4_SUBNET_MASK "255.255.255.0"
-#define APP_IF2_IPV4_DEFAULT_GATEWAY "0.0.0.0"
-#define APP_IF2_IPV4_PRIMARY_DNS "0.0.0.0"
-#define APP_IF2_IPV4_SECONDARY_DNS "0.0.0.0"
-#define APP_IF2_IPV4_ADDR_RANGE_MIN "192.168.8.10"
-#define APP_IF2_IPV4_ADDR_RANGE_MAX "192.168.8.99"
+static const NetInterfaceConfig AP_CONFIG =
+{
+   .hostName = "http-server",
+   .macAddress = "00-00-00-00-00-00",
+   .enableDHCP = TRUE,
+   .hostAddr = "192.168.8.1",
+   .subnetMask = "255.255.255.0",
+   .defaultGateway = "0.0.0.0",
+   .primaryDns = "0.0.0.0",
+   .secondaryDns = "0.0.0.0",
+   .minAddrRange = "192.168.8.10",
+   .maxAddrRange = "192.168.8.99",
+   .SSID = "ESP32_AP",
+   .password = "test1234",
+};
+
+// #define APP_IF2_HOST_NAME "http-server-demo"
+// #define APP_IF2_MAC_ADDR "00-00-00-00-00-00"
+
+// #define APP_IF2_USE_DHCP_SERVER ENABLED
+// #define APP_IF2_IPV4_HOST_ADDR "192.168.8.1"
+// #define APP_IF2_IPV4_SUBNET_MASK "255.255.255.0"
+// #define APP_IF2_IPV4_DEFAULT_GATEWAY "0.0.0.0"
+// #define APP_IF2_IPV4_PRIMARY_DNS "0.0.0.0"
+// #define APP_IF2_IPV4_SECONDARY_DNS "0.0.0.0"
+// #define APP_IF2_IPV4_ADDR_RANGE_MIN "192.168.8.10"
+// #define APP_IF2_IPV4_ADDR_RANGE_MAX "192.168.8.99"
+
+// Wi-Fi parameters (AP mode)
+// #define APP_WIFI_AP_SSID "ESP32_AP"
+// #define APP_WIFI_AP_PASSWORD "test1234"
+
+#if (IPV6_SUPPORT == ENABLED)
 
 #define APP_IF2_USE_ROUTER_ADV ENABLED
 #define APP_IF2_IPV6_LINK_LOCAL_ADDR "fe80::32:2"
@@ -30,19 +54,23 @@
 #define APP_IF2_IPV6_PREFIX_LENGTH 64
 #define APP_IF2_IPV6_GLOBAL_ADDR "fd00:1:2:3::32:2"
 
-//Wi-Fi parameters (AP mode)
-#define APP_WIFI_AP_SSID "TEST_ESP32_AP"
-#define APP_WIFI_AP_PASSWORD "1122334455"
+#endif
 
 // ********************************************************************************************
 // global variables
 
+static NetInterfaceConfig ifConfig;
+
 static DhcpServerSettings dhcpServerSettings;
 static DhcpServerContext dhcpServerContext;
+
+#if (IPV6_SUPPORT == ENABLED)
 
 static NdpRouterAdvSettings ndpRouterAdvSettings;
 static NdpRouterAdvPrefixInfo ndpRouterAdvPrefixInfo[1];
 static NdpRouterAdvContext ndpRouterAdvContext;
+
+#endif
 
 // ********************************************************************************************
 
@@ -50,13 +78,17 @@ error_t wifiApInterfaceInit()
 {
    error_t error;
    MacAddr macAddr;
+   bool_t result;
+
+   result = retrieveNetConfig(&ifConfig, AP_WIFI_INTERFACE);
+   if (!result) ifConfig = AP_CONFIG; // load default config
 
    // third network interface (Wi-Fi AP mode)
    NetInterface *interface = &netInterface[2];
 
    netSetInterfaceName(interface, APP_IF2_NAME);
-   netSetHostname(interface, APP_IF2_HOST_NAME);
-   macStringToAddr(APP_IF2_MAC_ADDR, &macAddr);
+   netSetHostname(interface, ifConfig.hostName);
+   macStringToAddr(ifConfig.macAddress, &macAddr);
    netSetMacAddr(interface, &macAddr);
 
    // select the relevant network adapter
@@ -73,58 +105,58 @@ error_t wifiApInterfaceInit()
 
     Ipv4Addr ipv4Addr;
 
-   ipv4StringToAddr(APP_IF2_IPV4_HOST_ADDR, &ipv4Addr);
+   ipv4StringToAddr(ifConfig.hostAddr, &ipv4Addr);
    ipv4SetHostAddr(interface, ipv4Addr);
 
-   ipv4StringToAddr(APP_IF2_IPV4_SUBNET_MASK, &ipv4Addr);
+   ipv4StringToAddr(ifConfig.subnetMask, &ipv4Addr);
    ipv4SetSubnetMask(interface, ipv4Addr);
 
-   ipv4StringToAddr(APP_IF2_IPV4_DEFAULT_GATEWAY, &ipv4Addr);
+   ipv4StringToAddr(ifConfig.defaultGateway, &ipv4Addr);
    ipv4SetDefaultGateway(interface, ipv4Addr);
 
-   ipv4StringToAddr(APP_IF2_IPV4_PRIMARY_DNS, &ipv4Addr);
+   ipv4StringToAddr(ifConfig.primaryDns, &ipv4Addr);
    ipv4SetDnsServer(interface, 0, ipv4Addr);
-   ipv4StringToAddr(APP_IF2_IPV4_SECONDARY_DNS, &ipv4Addr);
+   ipv4StringToAddr(ifConfig.secondaryDns, &ipv4Addr);
    ipv4SetDnsServer(interface, 1, ipv4Addr);
 
-#if (APP_IF2_USE_DHCP_SERVER == ENABLED)
+   if (ifConfig.enableDHCP == TRUE)
+   {
+      dhcpServerGetDefaultSettings(&dhcpServerSettings);
+      dhcpServerSettings.interface = interface;
+      // lease time, in seconds, assigned to the DHCP clients
+      dhcpServerSettings.leaseTime = 3600;
 
-   dhcpServerGetDefaultSettings(&dhcpServerSettings);
-   dhcpServerSettings.interface = interface;
-   // lease time, in seconds, assigned to the DHCP clients
-   dhcpServerSettings.leaseTime = 3600;
+      // lowest and highest IP addresses in the pool that are available
+      // for dynamic address assignment
+      ipv4StringToAddr(ifConfig.minAddrRange,
+         &dhcpServerSettings.ipAddrRangeMin);
+      ipv4StringToAddr(ifConfig.maxAddrRange,
+         &dhcpServerSettings.ipAddrRangeMax);
 
-   // lowest and highest IP addresses in the pool that are available
-   // for dynamic address assignment
-   ipv4StringToAddr(APP_IF2_IPV4_ADDR_RANGE_MIN,
-      &dhcpServerSettings.ipAddrRangeMin);
-   ipv4StringToAddr(APP_IF2_IPV4_ADDR_RANGE_MAX,
-      &dhcpServerSettings.ipAddrRangeMax);
+      ipv4StringToAddr(ifConfig.subnetMask,
+         &dhcpServerSettings.subnetMask);
 
-   ipv4StringToAddr(APP_IF2_IPV4_SUBNET_MASK,
-      &dhcpServerSettings.subnetMask);
+      ipv4StringToAddr(ifConfig.defaultGateway,
+         &dhcpServerSettings.defaultGateway);
 
-   ipv4StringToAddr(APP_IF2_IPV4_DEFAULT_GATEWAY,
-      &dhcpServerSettings.defaultGateway);
+      ipv4StringToAddr(ifConfig.primaryDns,
+         &dhcpServerSettings.dnsServer[0]);
+      ipv4StringToAddr(ifConfig.secondaryDns,
+         &dhcpServerSettings.dnsServer[1]);
 
-   ipv4StringToAddr(APP_IF2_IPV4_PRIMARY_DNS,
-      &dhcpServerSettings.dnsServer[0]);
-   ipv4StringToAddr(APP_IF2_IPV4_SECONDARY_DNS,
-      &dhcpServerSettings.dnsServer[1]);
+      error = dhcpServerInit(&dhcpServerContext, &dhcpServerSettings);
+      if (error) {
+         TRACE_ERROR("Failed to initialize DHCP server!\r\n");
+         return error;
+      }
 
-   error = dhcpServerInit(&dhcpServerContext, &dhcpServerSettings);
-   if (error) {
-      TRACE_ERROR("Failed to initialize DHCP server!\r\n");
-      return error;
+      error = dhcpServerStart(&dhcpServerContext);
+      if (error) {
+         TRACE_ERROR("Failed to start DHCP server!\r\n");
+         return error;
+      }
    }
 
-   error = dhcpServerStart(&dhcpServerContext);
-   if (error) {
-      TRACE_ERROR("Failed to start DHCP server!\r\n");
-      return error;
-   }
-
-#endif
 #endif
 
 #if (IPV6_SUPPORT == ENABLED)
@@ -192,12 +224,12 @@ esp_err_t wifiEnableAp()
    wifi_config_t config;
 
    TRACE_INFO("ESP32: Creating Wi-Fi network (%s)...\r\n",
-      APP_WIFI_AP_SSID);
+      ifConfig.SSID);
 
    memset(&config, 0, sizeof(wifi_config_t));
 
-   strcpy((char_t *) config.ap.ssid, APP_WIFI_AP_SSID);
-   strcpy((char_t *) config.ap.password, APP_WIFI_AP_PASSWORD);
+   strcpy((char_t *) config.ap.ssid, ifConfig.SSID);
+   strcpy((char_t *) config.ap.password, ifConfig.password);
    config.ap.authmode = WIFI_AUTH_WPA_WPA2_PSK;
    config.ap.max_connection = 4;
 

@@ -39,6 +39,7 @@ void initializeNetworks()
    initializeHttpServer();
 
    wifiEnableAp();
+   wifiConnect();
 }
 
 // ********************************************************************************************

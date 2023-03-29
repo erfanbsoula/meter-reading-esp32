@@ -3,6 +3,7 @@
 #include "esp_wifi.h"
 #include "core/net.h"
 #include "network.h"
+#include "source/storage/storage.h"
 #include "drivers/wifi/esp32_wifi_driver.h"
 #include "dhcp/dhcp_client.h"
 #include "ipv6/slaac.h"
@@ -10,34 +11,60 @@
 #include "esp_log.h"
 #include "debug.h"
 
-
-//First Wi-Fi interface (STA mode) configuration
+// first Wi-Fi interface (STA mode) configuration
 #define APP_IF1_NAME "wlan0"
-#define APP_IF1_HOST_NAME "http-server"
-#define APP_IF1_MAC_ADDR "00-00-00-00-00-00"
 
-#define APP_IF1_USE_DHCP_CLIENT ENABLED
-#define APP_IF1_IPV4_HOST_ADDR "192.168.0.20"
-#define APP_IF1_IPV4_SUBNET_MASK "255.255.255.0"
-#define APP_IF1_IPV4_DEFAULT_GATEWAY "192.168.0.254"
-#define APP_IF1_IPV4_PRIMARY_DNS "8.8.8.8"
-#define APP_IF1_IPV4_SECONDARY_DNS "8.8.4.4"
+static const NetInterfaceConfig STA_CONFIG =
+{
+   .hostName = "http-server",
+   .macAddress = "00-00-00-00-00-00",
+   .enableDHCP = TRUE,
+   .hostAddr = "192.168.0.20",
+   .subnetMask = "255.255.255.0",
+   .defaultGateway = "192.168.0.254",
+   .primaryDns = "8.8.8.8",
+   .secondaryDns = "8.8.4.4",
+   .minAddrRange = NULL,
+   .maxAddrRange = NULL,
+   .SSID = "IBMCO_Official_plus",
+   .password = "@88281228@ibmco",
+};
+
+// #define APP_IF1_HOST_NAME "http-server"
+// #define APP_IF1_MAC_ADDR "00-00-00-00-00-00"
+
+// #define APP_IF1_USE_DHCP_CLIENT ENABLED
+// #define APP_IF1_IPV4_HOST_ADDR "192.168.0.20"
+// #define APP_IF1_IPV4_SUBNET_MASK "255.255.255.0"
+// #define APP_IF1_IPV4_DEFAULT_GATEWAY "192.168.0.254"
+// #define APP_IF1_IPV4_PRIMARY_DNS "8.8.8.8"
+// #define APP_IF1_IPV4_SECONDARY_DNS "8.8.4.4"
+
+//Wi-Fi parameters (STA mode)
+// #define APP_WIFI_STA_SSID "IBMCO_Official_plus"
+// #define APP_WIFI_STA_PASSWORD "@88281228@ibmco"
+
+#if (IPV6_SUPPORT == ENABLED)
 
 #define APP_IF1_USE_SLAAC ENABLED
 #define APP_IF1_IPV6_LINK_LOCAL_ADDR "fe80::32:1"
 
-//Wi-Fi parameters (STA mode)
-#define APP_WIFI_STA_SSID "IBMCO_Official_plus"
-#define APP_WIFI_STA_PASSWORD "@88281228@ibmco"
+#endif
 
 // ********************************************************************************************
 // global variables
 
+static NetInterfaceConfig ifConfig;
+
 static DhcpClientSettings dhcpClientSettings;
 static DhcpClientContext dhcpClientContext;
 
+#if (IPV6_SUPPORT == ENABLED)
+
 static SlaacSettings slaacSettings;
 static SlaacContext slaacContext;
+
+#endif
 
 // ********************************************************************************************
 
@@ -45,13 +72,17 @@ error_t wifiStaInterfaceInit()
 {
    error_t error;
    MacAddr macAddr;
+   bool_t result;
+
+   result = retrieveNetConfig(&ifConfig, STA_WIFI_INTERFACE);
+   if (!result) ifConfig = STA_CONFIG; // load default config
 
    // second network interface (Wi-Fi STA mode)
    NetInterface *interface = &netInterface[1];
 
    netSetInterfaceName(interface, APP_IF1_NAME);
-   netSetHostname(interface, APP_IF1_HOST_NAME);
-   macStringToAddr(APP_IF1_MAC_ADDR, &macAddr);
+   netSetHostname(interface, ifConfig.hostName);
+   macStringToAddr(ifConfig.macAddress, &macAddr);
    netSetMacAddr(interface, &macAddr);
 
    // select the relevant network adapter
@@ -65,44 +96,45 @@ error_t wifiStaInterfaceInit()
    }
 
 #if (IPV4_SUPPORT == ENABLED)
-#if (APP_IF1_USE_DHCP_CLIENT == ENABLED)
 
-   dhcpClientGetDefaultSettings(&dhcpClientSettings);
-   dhcpClientSettings.interface = interface;
-   // disable rapid commit option
-   dhcpClientSettings.rapidCommit = FALSE;
+   if (ifConfig.enableDHCP == TRUE)
+   {
+      dhcpClientGetDefaultSettings(&dhcpClientSettings);
+      dhcpClientSettings.interface = interface;
+      // disable rapid commit option
+      dhcpClientSettings.rapidCommit = FALSE;
 
-   error = dhcpClientInit(&dhcpClientContext, &dhcpClientSettings);
-   if (error) {
-      TRACE_ERROR("Failed to initialize DHCP client!\r\n");
-      return error;
+      error = dhcpClientInit(&dhcpClientContext, &dhcpClientSettings);
+      if (error) {
+         TRACE_ERROR("Failed to initialize DHCP client!\r\n");
+         return error;
+      }
+
+      error = dhcpClientStart(&dhcpClientContext);
+      if (error) {
+         TRACE_ERROR("Failed to start DHCP client!\r\n");
+         return error;
+      }
+   }
+   else
+   {
+      Ipv4Addr ipv4Addr;
+
+      ipv4StringToAddr(ifConfig.hostAddr, &ipv4Addr);
+      ipv4SetHostAddr(interface, ipv4Addr);
+
+      ipv4StringToAddr(ifConfig.subnetMask, &ipv4Addr);
+      ipv4SetSubnetMask(interface, ipv4Addr);
+
+      ipv4StringToAddr(ifConfig.defaultGateway, &ipv4Addr);
+      ipv4SetDefaultGateway(interface, ipv4Addr);
+
+      ipv4StringToAddr(ifConfig.primaryDns, &ipv4Addr);
+      ipv4SetDnsServer(interface, 0, ipv4Addr);
+      ipv4StringToAddr(ifConfig.secondaryDns, &ipv4Addr);
+      ipv4SetDnsServer(interface, 1, ipv4Addr);
    }
 
-   error = dhcpClientStart(&dhcpClientContext);
-   if (error) {
-      TRACE_ERROR("Failed to start DHCP client!\r\n");
-      return error;
-   }
-
-#else
-
-   Ipv4Addr ipv4Addr;
-
-   ipv4StringToAddr(APP_IF1_IPV4_HOST_ADDR, &ipv4Addr);
-   ipv4SetHostAddr(interface, ipv4Addr);
-
-   ipv4StringToAddr(APP_IF1_IPV4_SUBNET_MASK, &ipv4Addr);
-   ipv4SetSubnetMask(interface, ipv4Addr);
-
-   ipv4StringToAddr(APP_IF1_IPV4_DEFAULT_GATEWAY, &ipv4Addr);
-   ipv4SetDefaultGateway(interface, ipv4Addr);
-
-   ipv4StringToAddr(APP_IF1_IPV4_PRIMARY_DNS, &ipv4Addr);
-   ipv4SetDnsServer(interface, 0, ipv4Addr);
-   ipv4StringToAddr(APP_IF1_IPV4_SECONDARY_DNS, &ipv4Addr);
-   ipv4SetDnsServer(interface, 1, ipv4Addr);
-
-#endif
 #endif
 
 #if (IPV6_SUPPORT == ENABLED)
@@ -149,12 +181,12 @@ esp_err_t wifiConnect()
    wifi_config_t config;
 
    TRACE_INFO("ESP32: Connecting to Wi-Fi network (%s)...\r\n",
-      APP_WIFI_STA_SSID);
+      ifConfig.SSID);
 
    memset(&config, 0, sizeof(wifi_config_t));
 
-   strcpy((char_t *) config.sta.ssid, APP_WIFI_STA_SSID);
-   strcpy((char_t *) config.sta.password, APP_WIFI_STA_PASSWORD);
+   strcpy((char_t *) config.sta.ssid, ifConfig.SSID);
+   strcpy((char_t *) config.sta.password, ifConfig.password);
 
    // set Wi-Fi operating mode
    ret = esp_wifi_set_mode(WIFI_MODE_STA);

@@ -30,8 +30,12 @@
 static DhcpClientSettings dhcpClientSettings;
 static DhcpClientContext dhcpClientContext;
 
+#if (IPV6_SUPPORT == ENABLED)
+
 static SlaacSettings slaacSettings;
 static SlaacContext slaacContext;
+
+#endif
 
 // ********************************************************************************************
 

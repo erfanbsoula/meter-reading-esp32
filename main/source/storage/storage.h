@@ -13,9 +13,9 @@ bool_t saveImgConfigJson(char_t *imgConfigJson);
 bool_t saveMqttConfigJson(char_t *mqttConfigJson);
 
 bool_t saveNetConfigJson(char_t *netConfigJson,
-   NetworkType interface);
+   NetInterfaceType interface);
 
-bool_t retrieveNetConfig(NetworkConfig *netConfig,
-   NetworkType interface);
+bool_t retrieveNetConfig(NetInterfaceConfig *netConfig,
+   NetInterfaceType interface);
 
 #endif

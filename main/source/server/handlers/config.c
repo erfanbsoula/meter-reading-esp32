@@ -147,7 +147,7 @@ error_t mqttConfigHandler(HttpConnection *connection)
 // ********************************************************************************************
 
 error_t netConfigHandler(HttpConnection *connection,
-   NetworkType interface)
+   NetInterfaceType interface)
 {
    if (strcmp(connection->request.method, "POST"))
       return ERROR_NOT_FOUND;
@@ -155,7 +155,7 @@ error_t netConfigHandler(HttpConnection *connection,
    bool_t parsingResult = FALSE;
 
    char_t *data = (char_t*) malloc(READ_STREAM_BUF_SIZE+1);
-   NetworkConfig *netConfig = malloc(sizeof(NetworkConfig));
+   NetInterfaceConfig *netConfig = malloc(sizeof(NetInterfaceConfig));
 
    if (data && netConfig)
    {
