@@ -11,10 +11,13 @@
 #include "esp_log.h"
 #include "debug.h"
 
+#define LOG_TAG "staWiFi"
+
 // first Wi-Fi interface (STA mode) configuration
 #define APP_IF1_NAME "wlan0"
 
 char_t DEFAULT_STA_CONFIG_JSON[] = "{"
+   "\"enableInterface\":1,"
    "\"hostName\":\"http-server\","
    "\"macAddress\":\"00-00-00-00-00-00\","
    "\"enableDHCP\":1,"
@@ -58,9 +61,17 @@ error_t wifiStaInterfaceInit()
 
    result = retrieveNetConfig(&ifConfig, STA_WIFI_INTERFACE);
    if (!result) {
-      TRACE_ERROR("Failed to load %s configuration!\n",
-         APP_IF1_NAME);
+      ESP_LOGE(LOG_TAG,
+         "Failed to load %s configuration!\n", APP_IF1_NAME);
+
+      ifConfig.enableInterface = FALSE;
       return ERROR_FAILURE;
+   }
+   if (!ifConfig.enableInterface) {
+      ESP_LOGI(LOG_TAG,
+         "Interface %s is disabled!", APP_IF1_NAME);
+
+      return NO_ERROR;
    }
 
    // second network interface (Wi-Fi STA mode)
@@ -163,6 +174,9 @@ error_t wifiStaInterfaceInit()
 
 esp_err_t wifiConnect()
 {
+   if (!ifConfig.enableInterface)
+      return ESP_FAIL;
+
    esp_err_t ret;
    wifi_config_t config;
 

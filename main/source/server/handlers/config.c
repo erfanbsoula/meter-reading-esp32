@@ -177,6 +177,7 @@ error_t netConfigHandler(HttpConnection *connection,
    {
       cJSON_Minify(data);
       saveNetConfigJson(data, interface);
+      freeNetConfigStrs(netConfig);
    }
 
    free(data);

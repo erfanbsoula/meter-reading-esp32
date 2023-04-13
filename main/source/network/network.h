@@ -20,6 +20,7 @@ enum _NetInterfaceType
 
 struct _NetInterfaceConfig
 {
+   bool_t enableInterface;
    char_t *hostName;
    char_t *macAddress;
    bool_t enableDHCP;

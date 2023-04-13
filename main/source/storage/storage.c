@@ -63,6 +63,7 @@ void retrieveUsers(Environment *appEnv)
 
       bool_t uFound, pFound;
       uFound = nvsReadString(usernameVar, &(user->username));
+      osDelayTask(50); // wait between consecutive tries
       pFound = nvsReadString(passwordVar, &(user->password));
 
       if (!uFound || !pFound)
@@ -88,6 +89,7 @@ void setDefaultUser(User *user, uint_t indx,
 
    bool_t uSaved, pSaved;
    uSaved = nvsSaveString(usernameVar, user->username);
+   osDelayTask(50); // wait between consecutive tries
    pSaved = nvsSaveString(passwordVar, user->password);
 
    if (uSaved && pSaved)

@@ -11,10 +11,13 @@
 #include "esp_log.h"
 #include "debug.h"
 
+#define LOG_TAG "apWiFi"
+
 // second Wi-Fi interface (AP mode)
 #define APP_IF2_NAME "wlan1"
 
 char_t DEFAULT_AP_CONFIG_JSON[] = "{"
+   "\"enableInterface\":0,"
    "\"hostName\":\"http-server\","
    "\"macAddress\":\"00-00-00-00-00-00\","
    "\"enableDHCP\":1,"
@@ -64,9 +67,17 @@ error_t wifiApInterfaceInit()
 
    result = retrieveNetConfig(&ifConfig, AP_WIFI_INTERFACE);
    if (!result) {
-      TRACE_ERROR("Failed to load %s configuration!\n",
-         APP_IF2_NAME);
+      ESP_LOGE(LOG_TAG,
+         "Failed to load %s configuration!\n", APP_IF2_NAME);
+
+      ifConfig.enableInterface = FALSE;
       return ERROR_FAILURE;
+   }
+   if (!ifConfig.enableInterface) {
+      ESP_LOGI(LOG_TAG,
+         "Interface %s is disabled!", APP_IF2_NAME);
+
+      return NO_ERROR;
    }
 
    // third network interface (Wi-Fi AP mode)
@@ -206,6 +217,9 @@ error_t wifiApInterfaceInit()
 
 esp_err_t wifiEnableAp()
 {
+   if (!ifConfig.enableInterface)
+      return ESP_FAIL;
+
    esp_err_t ret;
    wifi_config_t config;
 

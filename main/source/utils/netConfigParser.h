@@ -6,4 +6,6 @@
 bool_t parseNetConfig(NetInterfaceConfig *netConfig, char_t *data,
    NetInterfaceType interface);
 
+void freeNetConfigStrs(NetInterfaceConfig *netConfig);
+
 #endif

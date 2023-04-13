@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include "esp_system.h"
 #include "core/net.h"
 #include "source/network/network.h"
 #include "http/http_server.h"
@@ -114,6 +115,11 @@ error_t routerHelper(HttpConnection *connection,
 
    if (!strcmp(uri, "/apwifi"))
       return netConfigHandler(connection, AP_WIFI_INTERFACE);
+   
+   if (!strcmp(uri, "/reset")) {
+      esp_restart();
+      return NO_ERROR;
+   }
 
    return ERROR_NOT_FOUND;
 }

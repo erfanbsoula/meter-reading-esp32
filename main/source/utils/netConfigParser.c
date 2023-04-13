@@ -19,7 +19,7 @@ bool_t netConfigParseHelper(NetInterfaceConfig *netConfig, cJSON *root,
 static bool_t getStrItem(char_t **str, cJSON *root,
    const char_t *item);
 
-static void freeNetConfigStrs(NetInterfaceConfig *netConfig);
+void freeNetConfigStrs(NetInterfaceConfig *netConfig);
 // static char_t* strCopy(char_t *str);
 
 // ********************************************************************************************
@@ -56,6 +56,14 @@ bool_t netConfigParseHelper(NetInterfaceConfig *netConfig, cJSON *root,
     NetInterfaceType interface)
 {
    cJSON *child;
+
+   child = cJSON_GetObjectItem(root, "enableInterface");
+   if (!cJSON_IsNumber(child)) return FALSE;
+   netConfig->enableInterface = cJSON_GetNumberValue(child);
+   if (!netConfig->enableInterface)
+   {
+      return TRUE;
+   }
 
    if(!getStrItem(&netConfig->hostName, root, "hostName") ||
       !getStrItem(&netConfig->macAddress, root, "macAddress"))
@@ -120,7 +128,7 @@ static bool_t getStrItem(char_t **str, cJSON *root,
 
 // ********************************************************************************************
 
-static void freeNetConfigStrs(NetInterfaceConfig *netConfig)
+void freeNetConfigStrs(NetInterfaceConfig *netConfig)
 {
    free(netConfig->hostName);
    free(netConfig->macAddress);
