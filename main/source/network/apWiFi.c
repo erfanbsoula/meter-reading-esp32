@@ -16,21 +16,6 @@
 // second Wi-Fi interface (AP mode)
 #define APP_IF2_NAME "wlan1"
 
-char_t DEFAULT_AP_CONFIG_JSON[] = "{"
-   "\"enableInterface\":0,"
-   "\"hostName\":\"http-server\","
-   "\"macAddress\":\"00-00-00-00-00-00\","
-   "\"enableDHCP\":1,"
-   "\"hostAddr\":\"192.168.8.1\","
-   "\"subnetMask\":\"255.255.255.0\","
-   "\"defaultGateway\":\"0.0.0.0\","
-   "\"primaryDns\":\"0.0.0.0\","
-   "\"secondaryDns\":\"0.0.0.0\","
-   "\"minAddrRange\":\"192.168.8.10\","
-   "\"maxAddrRange\":\"192.168.8.99\","
-   "\"SSID\":\"ESP32_AP\","
-   "\"password\":\"test1234\"}";
-
 #if (IPV6_SUPPORT == ENABLED)
 
 #define APP_IF2_USE_ROUTER_ADV ENABLED
@@ -43,8 +28,6 @@ char_t DEFAULT_AP_CONFIG_JSON[] = "{"
 
 // ********************************************************************************************
 // global variables
-
-static NetInterfaceConfig ifConfig;
 
 static DhcpServerSettings dhcpServerSettings;
 static DhcpServerContext dhcpServerContext;
@@ -59,23 +42,33 @@ static NdpRouterAdvContext ndpRouterAdvContext;
 
 // ********************************************************************************************
 
-error_t wifiApInterfaceInit()
+void apWifiSetDefaultConfig(ApWifiConfig *config)
+{
+   config->enableInterface = TRUE;
+   strcpy(config->hostName, "http-server");
+   macStringToAddr("00-00-00-00-00-00", &config->macAddress);
+   config->useDhcpServer = TRUE;
+   ipv4StringToAddr("192.168.3.1", &config->hostAddr);
+   ipv4StringToAddr("255.255.255.0", &config->subnetMask);
+   ipv4StringToAddr("192.168.3.1", &config->defaultGateway);
+   ipv4StringToAddr("8.8.8.8", &config->primaryDns);
+   ipv4StringToAddr("8.8.4.4", &config->secondaryDns);
+   ipv4StringToAddr("192.168.3.2", &config->minAddrRange);
+   ipv4StringToAddr("192.168.3.9", &config->maxAddrRange);
+   strcpy(config->ssid, "ESP32_AP");
+   strcpy(config->password, "test1234");
+}
+
+// ********************************************************************************************
+
+error_t apWifiInit(ApWifiConfig *config)
 {
    error_t error;
-   MacAddr macAddr;
-   bool_t result;
 
-   result = retrieveNetConfig(&ifConfig, AP_WIFI_INTERFACE);
-   if (!result) {
-      ESP_LOGE(LOG_TAG,
-         "Failed to load %s configuration!\n", APP_IF2_NAME);
-
-      ifConfig.enableInterface = FALSE;
-      return ERROR_FAILURE;
-   }
-   if (!ifConfig.enableInterface) {
+   if (!config->enableInterface)
+   {
       ESP_LOGI(LOG_TAG,
-         "Interface %s is disabled!", APP_IF2_NAME);
+         "interface %s is disabled!", APP_IF2_NAME);
 
       return NO_ERROR;
    }
@@ -84,9 +77,8 @@ error_t wifiApInterfaceInit()
    NetInterface *interface = &netInterface[2];
 
    netSetInterfaceName(interface, APP_IF2_NAME);
-   netSetHostname(interface, ifConfig.hostName);
-   macStringToAddr(ifConfig.macAddress, &macAddr);
-   netSetMacAddr(interface, &macAddr);
+   netSetHostname(interface, config->hostName);
+   netSetMacAddr(interface, &config->macAddress);
 
    // select the relevant network adapter
    netSetDriver(interface, &esp32WifiApDriver);
@@ -100,23 +92,13 @@ error_t wifiApInterfaceInit()
 
 #if (IPV4_SUPPORT == ENABLED)
 
-    Ipv4Addr ipv4Addr;
+   ipv4SetHostAddr(interface, config->hostAddr);
+   ipv4SetSubnetMask(interface, config->subnetMask);
+   ipv4SetDefaultGateway(interface, config->defaultGateway);
+   ipv4SetDnsServer(interface, 0, config->primaryDns);
+   ipv4SetDnsServer(interface, 1, config->secondaryDns);
 
-   ipv4StringToAddr(ifConfig.hostAddr, &ipv4Addr);
-   ipv4SetHostAddr(interface, ipv4Addr);
-
-   ipv4StringToAddr(ifConfig.subnetMask, &ipv4Addr);
-   ipv4SetSubnetMask(interface, ipv4Addr);
-
-   ipv4StringToAddr(ifConfig.defaultGateway, &ipv4Addr);
-   ipv4SetDefaultGateway(interface, ipv4Addr);
-
-   ipv4StringToAddr(ifConfig.primaryDns, &ipv4Addr);
-   ipv4SetDnsServer(interface, 0, ipv4Addr);
-   ipv4StringToAddr(ifConfig.secondaryDns, &ipv4Addr);
-   ipv4SetDnsServer(interface, 1, ipv4Addr);
-
-   if (ifConfig.enableDHCP == TRUE)
+   if (config->useDhcpServer)
    {
       dhcpServerGetDefaultSettings(&dhcpServerSettings);
       dhcpServerSettings.interface = interface;
@@ -125,21 +107,13 @@ error_t wifiApInterfaceInit()
 
       // lowest and highest IP addresses in the pool that are available
       // for dynamic address assignment
-      ipv4StringToAddr(ifConfig.minAddrRange,
-         &dhcpServerSettings.ipAddrRangeMin);
-      ipv4StringToAddr(ifConfig.maxAddrRange,
-         &dhcpServerSettings.ipAddrRangeMax);
-
-      ipv4StringToAddr(ifConfig.subnetMask,
-         &dhcpServerSettings.subnetMask);
-
-      ipv4StringToAddr(ifConfig.defaultGateway,
-         &dhcpServerSettings.defaultGateway);
-
-      ipv4StringToAddr(ifConfig.primaryDns,
-         &dhcpServerSettings.dnsServer[0]);
-      ipv4StringToAddr(ifConfig.secondaryDns,
-         &dhcpServerSettings.dnsServer[1]);
+      dhcpServerSettings.ipAddrRangeMin = config->minAddrRange;
+      dhcpServerSettings.ipAddrRangeMax = config->maxAddrRange;
+   
+      dhcpServerSettings.subnetMask = config->subnetMask;
+      dhcpServerSettings.defaultGateway = config->defaultGateway;
+      dhcpServerSettings.dnsServer[0] = config->primaryDns;
+      dhcpServerSettings.dnsServer[1] = config->secondaryDns;
 
       error = dhcpServerInit(&dhcpServerContext, &dhcpServerSettings);
       if (error) {
@@ -215,21 +189,21 @@ error_t wifiApInterfaceInit()
 
 // ********************************************************************************************
 
-esp_err_t wifiEnableAp()
+esp_err_t wifiEnableAp(ApWifiConfig *ifConfig)
 {
-   if (!ifConfig.enableInterface)
+   if (!ifConfig->enableInterface)
       return ESP_FAIL;
 
    esp_err_t ret;
    wifi_config_t config;
 
    TRACE_INFO("ESP32: Creating Wi-Fi network (%s)...\r\n",
-      ifConfig.SSID);
+      ifConfig->ssid);
 
    memset(&config, 0, sizeof(wifi_config_t));
 
-   strcpy((char_t *) config.ap.ssid, ifConfig.SSID);
-   strcpy((char_t *) config.ap.password, ifConfig.password);
+   strcpy((char_t *) config.ap.ssid, ifConfig->ssid);
+   strcpy((char_t *) config.ap.password, ifConfig->password);
    config.ap.authmode = WIFI_AUTH_WPA_WPA2_PSK;
    config.ap.max_connection = 4;
 

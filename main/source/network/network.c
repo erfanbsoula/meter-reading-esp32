@@ -9,6 +9,7 @@
 #include "esp_log.h"
 #include "debug.h"
 
+#include "appEnv.h"
 #include "source/server/server.h"
 
 void wifiEventHandler(void *arg, esp_event_base_t eventBase,
@@ -32,14 +33,14 @@ void initializeNetworks()
    if(error)
       TRACE_ERROR("Failed to initialize TCP/IP stack!\r\n");
 
-   // ethInterfaceInit();
-   wifiStaInterfaceInit();
-   wifiApInterfaceInit();
+   // lanInterfaceInit(&appEnv.lanConfig);
+   staWifiInit(&appEnv.staWifiConfig);
+   apWifiInit(&appEnv.apWifiConfig);
 
    initializeHttpServer();
 
-   wifiEnableAp();
-   wifiConnect();
+   wifiConnect(&appEnv.staWifiConfig);
+   wifiEnableAp(&appEnv.apWifiConfig);
 }
 
 // ********************************************************************************************

@@ -4,20 +4,15 @@
 #include "os_port.h"
 #include "nvsHelper.h"
 #include "source/envTypes.h"
-#include "source/mqtt/mqttHelper.h"
-#include "source/network/network.h"
 
-void retrieveEnvironment(Environment *appEnv);
-void retrieveMqttConfig(MqttConfig *mqttConfig);
-bool_t saveImgConfigJson(char_t *imgConfigJson);
-bool_t saveMqttConfigJson(char_t *mqttConfigJson);
+bool_t retrieveEnvironment(Environment *appEnv);
 
-bool_t saveNetConfigJson(char_t *netConfigJson,
-   NetInterfaceType interface);
-
-bool_t retrieveNetConfig(NetInterfaceConfig *netConfig,
-   NetInterfaceType interface);
-
-char_t* getNetConfigJson(NetInterfaceType interface);
+bool_t saveLanConfig(LanConfig *lanConfig);
+bool_t saveStaWifiConfig(StaWifiConfig *staWifiConfig);
+bool_t saveApWifiConfig(ApWifiConfig *apWifiConfig);
+bool_t saveImgConfig(ImgConfig *imgConfig);
+bool_t saveUsers(User *users);
+bool_t saveMeterCounter(char_t *meterCounter);
+bool_t saveMqttConfig(MqttConfig *mqttConfig);
 
 #endif

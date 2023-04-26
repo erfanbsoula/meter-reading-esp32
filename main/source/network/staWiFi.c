@@ -1,9 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "esp_wifi.h"
-#include "core/net.h"
 #include "network.h"
-#include "source/storage/storage.h"
 #include "drivers/wifi/esp32_wifi_driver.h"
 #include "dhcp/dhcp_client.h"
 #include "ipv6/slaac.h"
@@ -11,23 +9,9 @@
 #include "esp_log.h"
 #include "debug.h"
 
-#define LOG_TAG "staWiFi"
-
-// first Wi-Fi interface (STA mode) configuration
+// first Wi-Fi interface (STA mode)
 #define APP_IF1_NAME "wlan0"
-
-char_t DEFAULT_STA_CONFIG_JSON[] = "{"
-   "\"enableInterface\":1,"
-   "\"hostName\":\"http-server\","
-   "\"macAddress\":\"00-00-00-00-00-00\","
-   "\"enableDHCP\":1,"
-   "\"hostAddr\":\"192.168.0.20\","
-   "\"subnetMask\":\"255.255.255.0\","
-   "\"defaultGateway\":\"192.168.0.254\","
-   "\"primaryDns\":\"8.8.8.8\","
-   "\"secondaryDns\":\"8.8.4.4\","
-   "\"SSID\":\"IBMCO_Official_plus\","
-   "\"password\":\"@88281228@ibmco\"}";
+#define LOG_TAG "staWiFi"
 
 #if (IPV6_SUPPORT == ENABLED)
 
@@ -38,8 +22,6 @@ char_t DEFAULT_STA_CONFIG_JSON[] = "{"
 
 // ********************************************************************************************
 // global variables
-
-static NetInterfaceConfig ifConfig;
 
 static DhcpClientSettings dhcpClientSettings;
 static DhcpClientContext dhcpClientContext;
@@ -53,23 +35,31 @@ static SlaacContext slaacContext;
 
 // ********************************************************************************************
 
-error_t wifiStaInterfaceInit()
+void staWifiSetDefaultConfig(StaWifiConfig *config)
+{
+   config->enableInterface = FALSE;
+   strcpy(config->hostName, "http-server");
+   macStringToAddr("00-00-00-00-00-00", &config->macAddress);
+   config->useDhcpClient = TRUE;
+   ipv4StringToAddr("192.168.2.20", &config->hostAddr);
+   ipv4StringToAddr("255.255.255.0", &config->subnetMask);
+   ipv4StringToAddr("192.168.2.1", &config->defaultGateway);
+   ipv4StringToAddr("8.8.8.8", &config->primaryDns);
+   ipv4StringToAddr("8.8.4.4", &config->secondaryDns);
+   strcpy(config->ssid, "IBMCO_Official_plus");
+   strcpy(config->password, "@88281228@ibmco");
+}
+
+// ********************************************************************************************
+
+error_t staWifiInit(StaWifiConfig *config)
 {
    error_t error;
-   MacAddr macAddr;
-   bool_t result;
 
-   result = retrieveNetConfig(&ifConfig, STA_WIFI_INTERFACE);
-   if (!result) {
-      ESP_LOGE(LOG_TAG,
-         "Failed to load %s configuration!\n", APP_IF1_NAME);
-
-      ifConfig.enableInterface = FALSE;
-      return ERROR_FAILURE;
-   }
-   if (!ifConfig.enableInterface) {
+   if (!config->enableInterface)
+   {
       ESP_LOGI(LOG_TAG,
-         "Interface %s is disabled!", APP_IF1_NAME);
+         "interface %s is disabled!", APP_IF1_NAME);
 
       return NO_ERROR;
    }
@@ -78,9 +68,8 @@ error_t wifiStaInterfaceInit()
    NetInterface *interface = &netInterface[1];
 
    netSetInterfaceName(interface, APP_IF1_NAME);
-   netSetHostname(interface, ifConfig.hostName);
-   macStringToAddr(ifConfig.macAddress, &macAddr);
-   netSetMacAddr(interface, &macAddr);
+   netSetHostname(interface, config->hostName);
+   netSetMacAddr(interface, &config->macAddress);
 
    // select the relevant network adapter
    netSetDriver(interface, &esp32WifiStaDriver);
@@ -94,7 +83,7 @@ error_t wifiStaInterfaceInit()
 
 #if (IPV4_SUPPORT == ENABLED)
 
-   if (ifConfig.enableDHCP == TRUE)
+   if (config->useDhcpClient)
    {
       dhcpClientGetDefaultSettings(&dhcpClientSettings);
       dhcpClientSettings.interface = interface;
@@ -115,21 +104,11 @@ error_t wifiStaInterfaceInit()
    }
    else
    {
-      Ipv4Addr ipv4Addr;
-
-      ipv4StringToAddr(ifConfig.hostAddr, &ipv4Addr);
-      ipv4SetHostAddr(interface, ipv4Addr);
-
-      ipv4StringToAddr(ifConfig.subnetMask, &ipv4Addr);
-      ipv4SetSubnetMask(interface, ipv4Addr);
-
-      ipv4StringToAddr(ifConfig.defaultGateway, &ipv4Addr);
-      ipv4SetDefaultGateway(interface, ipv4Addr);
-
-      ipv4StringToAddr(ifConfig.primaryDns, &ipv4Addr);
-      ipv4SetDnsServer(interface, 0, ipv4Addr);
-      ipv4StringToAddr(ifConfig.secondaryDns, &ipv4Addr);
-      ipv4SetDnsServer(interface, 1, ipv4Addr);
+      ipv4SetHostAddr(interface, config->hostAddr);
+      ipv4SetSubnetMask(interface, config->subnetMask);
+      ipv4SetDefaultGateway(interface, config->defaultGateway);
+      ipv4SetDnsServer(interface, 0, config->primaryDns);
+      ipv4SetDnsServer(interface, 1, config->secondaryDns);
    }
 
 #endif
@@ -165,28 +144,26 @@ error_t wifiStaInterfaceInit()
 #endif
 
    //Successful initialization
-   ESP_LOGI("wifi", "connected succesfully!");
-   netSetLinkState(interface, NIC_LINK_STATE_UP);
    return NO_ERROR;
 }
 
 // ********************************************************************************************
 
-esp_err_t wifiConnect()
+esp_err_t wifiConnect(StaWifiConfig *ifConfig)
 {
-   if (!ifConfig.enableInterface)
+   if (!ifConfig->enableInterface)
       return ESP_FAIL;
 
    esp_err_t ret;
    wifi_config_t config;
 
    TRACE_INFO("ESP32: Connecting to Wi-Fi network (%s)...\r\n",
-      ifConfig.SSID);
+      ifConfig->ssid);
 
    memset(&config, 0, sizeof(wifi_config_t));
 
-   strcpy((char_t *) config.sta.ssid, ifConfig.SSID);
-   strcpy((char_t *) config.sta.password, ifConfig.password);
+   strcpy((char_t *) config.sta.ssid, ifConfig->ssid);
+   strcpy((char_t *) config.sta.password, ifConfig->password);
 
    // set Wi-Fi operating mode
    ret = esp_wifi_set_mode(WIFI_MODE_STA);

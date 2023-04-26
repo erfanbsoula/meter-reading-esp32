@@ -2,263 +2,198 @@
 #include <stdbool.h>
 #include <string.h>
 #include "storage.h"
-#include "source/utils/imgConfigParser.h"
-#include "source/mqtt/mqttConfigParser.h"
-#include "source/utils/netConfigParser.h"
 #include "esp_log.h"
 
 #define LOG_TAG "storage"
 
 // NVS variable names
-#define NVS_imgConfig_VAR "imgConfig"
-#define NVS_username_VAR "username#"
-#define NVS_password_VAR "password#"
-#define NVS_meterCounter_VAR "meterCounter"
+#define NVS_lanConfig_KEY "lanConfig"
+#define NVS_staWifiConfig_KEY "staWifiConfig"
+#define NVS_apWifiConfig_KEY "apWifiConfig"
+#define NVS_imgConfig_KEY "imgConfig"
+#define NVS_users_KEY "users"
+#define NVS_meterCounter_KEY "meterCounter"
 #define NVS_mqttConfig_VAR "mqttConfig"
-#define NVS_staWifiConfig_VAR "staWifiConfig"
-#define NVS_apWifiConfig_VAR "apWifiConfig"
 
 #define DEFAULT_USERNAME "admin#"
-#define DEFAULT_PASSWORD "12345678"
+#define DEFAULT_PASSWORD "test1234"
 
 // ********************************************************************************************
 // forward declaration of functions
 
-void retrieveEnvironment(Environment *appEnv);
-void retrieveMqttConfig(MqttConfig *mqttConfig);
-void retrieveUsers(Environment *appEnv);
-void setDefaultUser(User *user, uint_t indx,
-   char_t *usernameVar, char_t *passwordVar);
-
+bool_t retrieveEnvironment(Environment *appEnv);
+void retrieveLanConfig(LanConfig *lanConfig);
+void retrieveStaWifiConfig(StaWifiConfig *staWifiConfig);
+void retrieveApWifiConfig(ApWifiConfig *apWifiConfig);
 void retrieveImgConfig(ImgConfig *imgConfig);
-void retrieveMeterCounter(Environment *appEnv);
-bool_t saveImgConfigJson(char_t *imgConfigJson);
-bool_t saveMqttConfigJson(char_t *mqttConfigJson);
-static char_t* strCopy(char_t *str, size_t strLen);
+void retrieveUsers(User *users);
+void retrieveMeterCounter(char_t *meterCounter);
+void retrieveMqttConfig(MqttConfig *mqttConfig);
+
+bool_t saveLanConfig(LanConfig *lanConfig);
+bool_t saveStaWifiConfig(StaWifiConfig *staWifiConfig);
+bool_t saveApWifiConfig(ApWifiConfig *apWifiConfig);
+bool_t saveImgConfig(ImgConfig *imgConfig);
+bool_t saveUsers(User *users);
+bool_t saveMeterCounter(char_t *meterCounter);
+bool_t saveMqttConfig(MqttConfig *mqttConfig);
+
+void setDefaultUsers(User *users);
 
 // ********************************************************************************************
 
-void retrieveEnvironment(Environment *appEnv)
+bool_t retrieveEnvironment(Environment *appEnv)
 {
-   retrieveUsers(appEnv);
-   retrieveImgConfig(&(appEnv->imgConfig));
-   retrieveMeterCounter(appEnv);
+   bool_t result = nvsStart();
+   if (!result) return FALSE;
+
+   retrieveLanConfig(&appEnv->lanConfig);
+   osDelayTask(50);
+   retrieveStaWifiConfig(&appEnv->staWifiConfig);
+   osDelayTask(50);
+   retrieveApWifiConfig(&appEnv->apWifiConfig);
+   osDelayTask(50);
+   retrieveImgConfig(&appEnv->imgConfig);
+   osDelayTask(50);
+   retrieveUsers(appEnv.users);
+   osDelayTask(50);
+   retrieveMeterCounter(appEnv->meterCounter);
+   osDelayTask(50);
+   retrieveMqttConfig(&appEnv->mqttConfig);
+
+   nvsFinish();
+   return TRUE;
 }
 
 // ********************************************************************************************
 
-void retrieveUsers(Environment *appEnv)
+void retrieveLanConfig(LanConfig *lanConfig)
 {
-   static const size_t usernameVarLen = sizeof(NVS_username_VAR);
-   static const size_t passwordVarLen = sizeof(NVS_password_VAR);
+   bool_t result = nvsGetBlob(
+      NVS_lanConfig_KEY, lanConfig, sizeof(LanConfig));
+   
+   if (!result)
+      lanSetDefaultConfig(lanConfig);
+}
 
-   char_t *usernameVar = strCopy(NVS_username_VAR, usernameVarLen);
-   char_t *passwordVar = strCopy(NVS_password_VAR, passwordVarLen);
-
-   for (uint_t i = 0; i < USER_COUNT; i++)
-   {
-      User *user = &(appEnv->users[i]);
-      usernameVar[usernameVarLen-2] = '0' + i;
-      passwordVar[passwordVarLen-2] = '0' + i;
-
-      bool_t uFound, pFound;
-      uFound = nvsReadString(usernameVar, &(user->username));
-      osDelayTask(50); // wait between consecutive tries
-      pFound = nvsReadString(passwordVar, &(user->password));
-
-      if (!uFound || !pFound)
-         setDefaultUser(user, i, usernameVar, passwordVar);
-   }
-
-   free(usernameVar);
-   free(passwordVar);
+bool_t saveLanConfig(LanConfig *lanConfig)
+{
+   return nvsSetBlob(
+      NVS_lanConfig_KEY, lanConfig, sizeof(LanConfig));
 }
 
 // ********************************************************************************************
 
-void setDefaultUser(User *user, uint_t indx,
-   char_t *usernameVar, char_t *passwordVar)
+void retrieveStaWifiConfig(StaWifiConfig *staWifiConfig)
 {
-   static const size_t defaultUsernameLen = sizeof(DEFAULT_USERNAME);
-   static const size_t defaultPasswordLen = sizeof(DEFAULT_PASSWORD);
+   bool_t result = nvsGetBlob(
+      NVS_staWifiConfig_KEY, staWifiConfig, sizeof(StaWifiConfig));
+   
+   if (!result)
+      staWifiSetDefaultConfig(staWifiConfig);
+}
 
-   user->username = strCopy(DEFAULT_USERNAME, defaultUsernameLen);
-   user->username[defaultUsernameLen-2] = '0' + indx;
+bool_t saveStaWifiConfig(StaWifiConfig *staWifiConfig)
+{
+   return nvsSetBlob(
+      NVS_staWifiConfig_KEY, staWifiConfig, sizeof(StaWifiConfig));
+}
 
-   user->password = strCopy(DEFAULT_PASSWORD, defaultPasswordLen);
+// ********************************************************************************************
 
-   bool_t uSaved, pSaved;
-   uSaved = nvsSaveString(usernameVar, user->username);
-   osDelayTask(50); // wait between consecutive tries
-   pSaved = nvsSaveString(passwordVar, user->password);
+void retrieveApWifiConfig(ApWifiConfig *apWifiConfig)
+{
+   bool_t result = nvsGetBlob(
+      NVS_apWifiConfig_KEY, apWifiConfig, sizeof(ApWifiConfig));
+   
+   if (!result)
+      staWifiSetDefaultConfig(apWifiConfig);
+}
 
-   if (uSaved && pSaved)
-      ESP_LOGI(LOG_TAG, "saved default username and password");
+bool_t saveApWifiConfig(ApWifiConfig *apWifiConfig)
+{
+   return nvsSetBlob(
+      NVS_apWifiConfig_KEY, apWifiConfig, sizeof(ApWifiConfig));
 }
 
 // ********************************************************************************************
 
 void retrieveImgConfig(ImgConfig *imgConfig)
 {
-   imgConfig->isConfigured = FALSE;
-   imgConfig->positions = NULL;
-
-   char_t *data;
-   bool_t result = nvsReadString(NVS_imgConfig_VAR, &data);
-   if (!result) return;
-
-   result = parseImgConfig(imgConfig, data);
+   bool_t result = nvsGetBlob(
+      NVS_imgConfig_KEY, imgConfig, sizeof(ImgConfig));
+   
    if (!result)
-   {
-      ESP_LOGE(LOG_TAG,
-         "couldn't parse imgConfig during retrieval!");
-   }
-   else imgConfig->isConfigured = TRUE;
+      imgConfig->isConfigured = FALSE;
+}
 
-   free(data);
+bool_t saveImgConfig(ImgConfig *imgConfig)
+{
+   return nvsSetBlob(
+      NVS_imgConfig_KEY, imgConfig, sizeof(ImgConfig));
 }
 
 // ********************************************************************************************
 
-void retrieveMeterCounter(Environment *appEnv)
+void retrieveUsers(User *users)
 {
-   if (!appEnv->imgConfig.isConfigured)
-      return;
+   bool_t result = nvsGetBlob(
+      NVS_users_KEY, users, USER_COUNT * sizeof(User));
+   
+   if (!result)
+      setDefaultUsers(users);
+}
 
-   bool_t result = nvsReadString(
-      NVS_meterCounter_VAR, &(appEnv->meterCounter));
-   if (!result) {
-      appEnv->meterCounter = NULL;
-      return;
-   }
-
-   if (strlen(appEnv->meterCounter) != appEnv->imgConfig.digitCount)
+void setDefaultUsers(User *users)
+{
+   for (uint_t i = 0; i < USER_COUNT; i++)
    {
-      ESP_LOGE(LOG_TAG,
-         "retrieved meterCounter doesn't match imgConfig");
-      free(appEnv->meterCounter);
-      appEnv->meterCounter = NULL;
-      return;
-   }
+      User *user = &(users[i]);
+      strcpy(user->username, DEFAULT_USERNAME);
+      strcpy(user->password, DEFAULT_PASSWORD);
 
-   ESP_LOGI(LOG_TAG,
-      "meterCounter retrieved successfully (%s)",
-      appEnv->meterCounter);
+      user->username[sizeof(DEFAULT_USERNAME)-2] = '0' + i;
+   }
+}
+
+bool_t saveUsers(User *users)
+{
+   return nvsSetBlob(
+      NVS_users_KEY, users, USER_COUNT * sizeof(User));
+}
+
+// ********************************************************************************************
+
+void retrieveMeterCounter(char_t *meterCounter)
+{
+   bool_t result = nvsGetBlob(
+      NVS_meterCounter_KEY, meterCounter, MAX_DIGIT_COUNT+1);
+   
+   if (!result)
+      meterCounter[0] = '\0';
+}
+
+bool_t saveMeterCounter(char_t *meterCounter)
+{
+   return nvsSetBlob(
+      NVS_meterCounter_KEY, meterCounter, MAX_DIGIT_COUNT+1);
 }
 
 // ********************************************************************************************
 
 void retrieveMqttConfig(MqttConfig *mqttConfig)
 {
-   mqttConfig->isConfigured = FALSE;
-   mqttConfig->mqttEnable = FALSE;
-   mqttConfig->serverIP = NULL;
-   mqttConfig->messageTopic = NULL;
-   mqttConfig->statusTopic = NULL;
-
-   char_t *data;
-   bool_t result = nvsReadString(NVS_mqttConfig_VAR, &data);
-   if (!result) return;
-
-   result = parseMqttConfig(mqttConfig, data);
+   bool_t result = nvsGetBlob(
+      NVS_mqttConfig_VAR, mqttConfig, sizeof(MqttConfig));
+   
    if (!result)
-   {
-      ESP_LOGE(LOG_TAG,
-         "couldn't parse mqttConfig during retrieval!");
-   }
-   else mqttConfig->isConfigured = TRUE;
+      mqttConfig->isConfigured = FALSE;
+}
 
-   free(data);
+bool_t saveMqttConfig(MqttConfig *mqttConfig)
+{
+   return nvsSetBlob(
+      NVS_mqttConfig_VAR, mqttConfig, sizeof(MqttConfig));
 }
 
 // ********************************************************************************************
-
-bool_t retrieveNetConfig(NetInterfaceConfig *netConfig,
-   NetInterfaceType interface)
-{
-   char_t *data;
-   bool_t result, deallocate = TRUE;
-
-   if (interface == STA_WIFI_INTERFACE) {
-      result = nvsReadString(NVS_staWifiConfig_VAR, &data);
-      if (!result) {
-         data = DEFAULT_STA_CONFIG_JSON;
-         nvsSaveString(NVS_staWifiConfig_VAR, data);
-         deallocate = FALSE;
-      }
-   }
-   else if (interface == AP_WIFI_INTERFACE) {
-      result = nvsReadString(NVS_apWifiConfig_VAR, &data);
-      if (!result) {
-         data = DEFAULT_AP_CONFIG_JSON;
-         nvsSaveString(NVS_apWifiConfig_VAR, data);
-         deallocate = FALSE;
-      }
-   }
-   else return FALSE;
-
-   result = parseNetConfig(netConfig, data, interface);
-   if (deallocate) free(data);
-
-   if (!result)
-   {
-      ESP_LOGE(LOG_TAG,
-         "couldn't parse netConfig during retrieval!");
-      
-      return FALSE;
-   }
-   return TRUE;
-}
-
-// ********************************************************************************************
-
-bool_t saveImgConfigJson(char_t *imgConfigJson)
-{
-   return nvsSaveString(NVS_imgConfig_VAR, imgConfigJson);
-}
-
-bool_t saveMqttConfigJson(char_t *mqttConfigJson)
-{
-   return nvsSaveString(NVS_mqttConfig_VAR, mqttConfigJson);
-}
-
-bool_t saveNetConfigJson(char_t *netConfigJson,
-   NetInterfaceType interface)
-{
-   if (interface == STA_WIFI_INTERFACE)
-      return nvsSaveString(NVS_staWifiConfig_VAR, netConfigJson);
-
-   if (interface == AP_WIFI_INTERFACE)
-      return nvsSaveString(NVS_apWifiConfig_VAR, netConfigJson);
-
-   return FALSE;
-}
-
-char_t* getNetConfigJson(NetInterfaceType interface)
-{
-   char_t *data;
-   bool_t result = FALSE;
-
-   if (interface == STA_WIFI_INTERFACE)
-      result = nvsReadString(NVS_staWifiConfig_VAR, &data);
-   else if (interface == AP_WIFI_INTERFACE)
-      result = nvsReadString(NVS_apWifiConfig_VAR, &data);
-
-   if (!result) return NULL;
-
-   return data;
-}
-
-// ********************************************************************************************
-
-static char_t* strCopy(char_t *str, size_t memLen)
-{
-   char_t *strCopied = (char_t*) malloc(memLen);
-   if (strCopied == NULL) {
-      ESP_LOGE(LOG_TAG, "memory allocation failed!");
-      return NULL;
-   }
-
-   strcpy(strCopied, str);
-   return strCopied;
-}

@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include "core/net.h"
 #include "network.h"
 #include "drivers/mac/esp32_eth_driver.h"
 #include "drivers/phy/lan8720_driver.h"
@@ -10,19 +9,15 @@
 #include "debug.h"
 
 // ethernet interface configuration
-#define APP_IF0_NAME "eth"
-#define APP_IF0_HOST_NAME "http-server"
-#define APP_IF0_MAC_ADDR "00-AB-CD-EF-32-00"
+#define APP_IF0_NAME "lan"
+#define LOG_TAG "lan"
 
-#define APP_IF0_USE_DHCP_CLIENT ENABLED
-#define APP_IF0_IPV4_HOST_ADDR "192.168.0.20"
-#define APP_IF0_IPV4_SUBNET_MASK "255.255.255.0"
-#define APP_IF0_IPV4_DEFAULT_GATEWAY "192.168.0.254"
-#define APP_IF0_IPV4_PRIMARY_DNS "8.8.8.8"
-#define APP_IF0_IPV4_SECONDARY_DNS "8.8.4.4"
+#if (IPV6_SUPPORT == ENABLED)
 
 #define APP_IF0_USE_SLAAC ENABLED
 #define APP_IF0_IPV6_LINK_LOCAL_ADDR "fe80::32:0"
+
+#endif
 
 // ********************************************************************************************
 // global variables
@@ -39,18 +34,30 @@ static SlaacContext slaacContext;
 
 // ********************************************************************************************
 
-error_t ethInterfaceInit()
+void lanSetDefaultConfig(LanConfig *config)
+{
+   strcpy(config->hostName, "http-server");
+   macStringToAddr("00-AB-CD-EF-32-00", &config->macAddress);
+   config->enableDhcp = TRUE;
+   ipv4StringToAddr("192.168.1.2", &config->hostAddr);
+   ipv4StringToAddr("255.255.255.0", &config->subnetMask);
+   ipv4StringToAddr("192.168.1.1", &config->defaultGateway);
+   ipv4StringToAddr("8.8.8.8", &config->primaryDns);
+   ipv4StringToAddr("8.8.4.4", &config->secondaryDns);
+}
+
+// ********************************************************************************************
+
+error_t lanInterfaceInit(LanConfig *config)
 {
    error_t error;
-   MacAddr macAddr;
 
    // first network interface (Ethernet 10/100)
    NetInterface *interface = &netInterface[0];
 
    netSetInterfaceName(interface, APP_IF0_NAME);
-   netSetHostname(interface, APP_IF0_HOST_NAME);
-   macStringToAddr(APP_IF0_MAC_ADDR, &macAddr);
-   netSetMacAddr(interface, &macAddr);
+   netSetHostname(interface, config->hostname);
+   netSetMacAddr(interface, &config->macAddress);
 
    // select the relevant network adapter
    netSetDriver(interface, &esp32EthDriver);
@@ -65,44 +72,35 @@ error_t ethInterfaceInit()
    }
 
 #if (IPV4_SUPPORT == ENABLED)
-#if (APP_IF0_USE_DHCP_CLIENT == ENABLED)
 
-   dhcpClientGetDefaultSettings(&dhcpClientSettings);
-   dhcpClientSettings.interface = interface;
-   // disable rapid commit option
-   dhcpClientSettings.rapidCommit = FALSE;
+   if (config->enableDhcp)
+   {
+      dhcpClientGetDefaultSettings(&dhcpClientSettings);
+      dhcpClientSettings.interface = interface;
+      // disable rapid commit option
+      dhcpClientSettings.rapidCommit = FALSE;
 
-   error = dhcpClientInit(&dhcpClientContext, &dhcpClientSettings);
-   if (error) {
-      TRACE_ERROR("Failed to initialize DHCP client!\r\n");
-      return error;
+      error = dhcpClientInit(&dhcpClientContext, &dhcpClientSettings);
+      if (error) {
+         TRACE_ERROR("Failed to initialize DHCP client!\r\n");
+         return error;
+      }
+
+      error = dhcpClientStart(&dhcpClientContext);
+      if (error) {
+         TRACE_ERROR("Failed to start DHCP client!\r\n");
+         return error;
+      }
+   }
+   else
+   {
+      ipv4SetHostAddr(interface, config->hostAddr);
+      ipv4SetSubnetMask(interface, config->subnetMask);
+      ipv4SetDefaultGateway(interface, config->defaultGateway);
+      ipv4SetDnsServer(interface, 0, config->primaryDns);
+      ipv4SetDnsServer(interface, 1, config->secondaryDns);
    }
 
-   error = dhcpClientStart(&dhcpClientContext);
-   if (error) {
-      TRACE_ERROR("Failed to start DHCP client!\r\n");
-      return error;
-   }
-
-#else
-
-   Ipv4Addr ipv4Addr;
-
-   ipv4StringToAddr(APP_IF0_IPV4_HOST_ADDR, &ipv4Addr);
-   ipv4SetHostAddr(interface, ipv4Addr);
-
-   ipv4StringToAddr(APP_IF0_IPV4_SUBNET_MASK, &ipv4Addr);
-   ipv4SetSubnetMask(interface, ipv4Addr);
-
-   ipv4StringToAddr(APP_IF0_IPV4_DEFAULT_GATEWAY, &ipv4Addr);
-   ipv4SetDefaultGateway(interface, ipv4Addr);
-
-   ipv4StringToAddr(APP_IF0_IPV4_PRIMARY_DNS, &ipv4Addr);
-   ipv4SetDnsServer(interface, 0, ipv4Addr);
-   ipv4StringToAddr(APP_IF0_IPV4_SECONDARY_DNS, &ipv4Addr);
-   ipv4SetDnsServer(interface, 1, ipv4Addr);
-
-#endif
 #endif
 
 #if (IPV6_SUPPORT == ENABLED)

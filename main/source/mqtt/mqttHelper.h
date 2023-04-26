@@ -1,20 +1,19 @@
 #ifndef __MQTT_HELPER_H__
 #define __MQTT_HELPER_H__
 
-#include "os_port.h"
+#include "mqtt/mqtt_client.h"
 
 typedef struct _MqttConfig MqttConfig;
 
 struct _MqttConfig
 {
-   bool_t isConfigured;
-   bool_t mqttEnable;
+   uint8_t isConfigured;
+   uint8_t mqttEnable;
    systime_t timeout;
-   systime_t taskInterval;
-   char_t *serverIP;
+   Ipv4Addr serverIP;
    uint16_t serverPort;
-   char_t *statusTopic;
-   char_t *messageTopic;
+   char_t statusTopic[20];
+   char_t messageTopic[20];
 };
 
 void mqttInitialize();

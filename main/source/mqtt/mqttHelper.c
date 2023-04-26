@@ -6,14 +6,12 @@
 #include "os_port_freertos.h"
 #include "source/storage/storage.h"
 #include "esp_log.h"
+#include "appEnv.h"
 
 static const char *LOG_TAG = "mqtt";
 
 #define  MQTT_MAIN_TASK_INTERVAL 200
 MqttClientContext mqttClientContext;
-
-static IpAddr serverIpAddr;
-MqttConfig mqttConfig;
 
 #define MESSAGE_QUEUE_LEN 5
 char_t *messageQueue[MESSAGE_QUEUE_LEN];
@@ -45,14 +43,12 @@ char_t* mqttStrCopy(char_t *str);
 
 void mqttInitialize()
 {
-   retrieveMqttConfig(&mqttConfig);
-
-   if (!mqttConfig.isConfigured)
+   if (!appEnv.mqttConfig.isConfigured)
    {
       ESP_LOGI(LOG_TAG, "no configuration found!");
       return;
    }
-   else if (!mqttConfig.mqttEnable)
+   else if (!appEnv.mqttConfig.mqttEnable)
    {
       ESP_LOGI(LOG_TAG, "mqtt disabled!");
       return;
@@ -112,34 +108,36 @@ error_t mqttConnect()
 {
    error_t error;
 
-   ipStringToAddr(mqttConfig.serverIP, &serverIpAddr);
    mqttClientSetTransportProtocol(
       &mqttClientContext, MQTT_TRANSPORT_PROTOCOL_TCP);
 
-   mqttClientSetTimeout(&mqttClientContext, mqttConfig.timeout);
-   mqttClientSetKeepAlive(
-      &mqttClientContext, MQTT_MAIN_TASK_INTERVAL);
+   mqttClientSetTimeout(&mqttClientContext,
+      appEnv.mqttConfig.timeout);
+
+   mqttClientSetKeepAlive(&mqttClientContext,
+      MQTT_MAIN_TASK_INTERVAL);
 
    mqttClientRegisterPublishCallback(
       &mqttClientContext, mqttPublishCallback);
 
-   mqttClientSetWillMessage(
-      &mqttClientContext, mqttConfig.statusTopic,
+   mqttClientSetWillMessage(&mqttClientContext,
+      appEnv.mqttConfig.statusTopic,
       "offline", 7, MQTT_QOS_LEVEL_0, FALSE);
 
    do // exception handling block
    {
       error = mqttClientConnect(&mqttClientContext,
-         &serverIpAddr, mqttConfig.serverPort, TRUE);
+         &serverIpAddr, appEnv.mqttConfig.serverPort, TRUE);
       if (error) break;
 
       // subscribe to the desired topics
       error = mqttClientSubscribe(&mqttClientContext,
-         mqttConfig.messageTopic, MQTT_QOS_LEVEL_1, NULL);
+         appEnv.mqttConfig.messageTopic,
+         MQTT_QOS_LEVEL_1, NULL);
       if (error) break;
 
       error = mqttClientPublish(
-         &mqttClientContext, mqttConfig.statusTopic,
+         &mqttClientContext, appEnv.mqttConfig.statusTopic,
          "online", 6, MQTT_QOS_LEVEL_1, TRUE, NULL);
    } 
    while (0);
@@ -155,7 +153,7 @@ void mqttPublishCallback(MqttClientContext *context,
    bool_t dup, MqttQosLevel qos, bool_t retain, uint16_t packetId)
 {
    //Check topic name
-   if(!strcmp(topic, mqttConfig.messageTopic))
+   if(!strcmp(topic, appEnv.mqttConfig.messageTopic))
    {
       char_t *str = (char_t*) malloc(length+1);
       if (!str) return;
@@ -174,8 +172,8 @@ error_t mqttProcessMessageQueue()
    char_t *message = messageQueue[0];
    if (!message) return NO_ERROR;
 
-   error = mqttClientPublish(
-      &mqttClientContext, mqttConfig.messageTopic, message,
+   error = mqttClientPublish(&mqttClientContext,
+      appEnv.mqttConfig.messageTopic, message,
       strlen(message), MQTT_QOS_LEVEL_1, TRUE, NULL);
 
    if (!error) mqttMessageQueuePop();

@@ -1,47 +1,68 @@
 #ifndef __NETWORK_H__
 #define __NETWORK_H__
 
-#include "os_port.h"
+#include "core/net.h"
 #include "esp_err.h"
-#include "error.h"
 
-typedef enum _NetInterfaceType NetInterfaceType;
-typedef struct _NetInterfaceConfig NetInterfaceConfig;
+typedef struct _LanConfig LanConfig;
+typedef struct _StaWifiConfig StaWifiConfig;
+typedef struct _ApWifiConfig ApWifiConfig;
 
-extern char_t DEFAULT_AP_CONFIG_JSON[];
-extern char_t DEFAULT_STA_CONFIG_JSON[];
-
-enum _NetInterfaceType
+struct _LanConfig
 {
-   ETHERNET_INTERFACE,
-   STA_WIFI_INTERFACE,
-   AP_WIFI_INTERFACE,
+   char_t hostname[16];
+   MacAddr macAddress;
+   uint8_t enableDhcp;
+   Ipv4Addr hostAddr;
+   Ipv4Addr subnetMask;
+   Ipv4Addr defaultGateway;
+   Ipv4Addr primaryDns;
+   Ipv4Addr secondaryDns;
 };
 
-struct _NetInterfaceConfig
+struct _StaWifiConfig
 {
-   bool_t enableInterface;
-   char_t *hostName;
-   char_t *macAddress;
-   bool_t enableDHCP;
-   char_t *hostAddr;
-   char_t *subnetMask;
-   char_t *defaultGateway;
-   char_t *primaryDns;
-   char_t *secondaryDns;
-   char_t *minAddrRange;
-   char_t *maxAddrRange;
-   char_t *SSID;
-   char_t *password;
+   uint8_t enableInterface;
+   char_t hostName[16];
+   MacAddr macAddress;
+   uint8_t useDhcpClient;
+   Ipv4Addr hostAddr;
+   Ipv4Addr subnetMask;
+   Ipv4Addr defaultGateway;
+   Ipv4Addr primaryDns;
+   Ipv4Addr secondaryDns;
+   char_t ssid[32];
+   char_t password[32];
+};
+
+struct _ApWifiConfig
+{
+   uint8_t enableInterface;
+   char_t hostName[16];
+   MacAddr macAddress;
+   uint8_t useDhcpServer;
+   Ipv4Addr hostAddr;
+   Ipv4Addr subnetMask;
+   Ipv4Addr defaultGateway;
+   Ipv4Addr primaryDns;
+   Ipv4Addr secondaryDns;
+   Ipv4Addr minAddrRange;
+   Ipv4Addr maxAddrRange;
+   char_t ssid[32];
+   char_t password[32];
 };
 
 void initializeNetworks();
 
+void lanSetDefaultConfig(LanConfig *config);
+void staWifiSetDefaultConfig(StaWifiConfig *config);
+void apWifiSetDefaultConfig(ApWifiConfig *config);
+
 // private functions
-error_t ethInterfaceInit();
-error_t wifiStaInterfaceInit();
-esp_err_t wifiConnect();
-error_t wifiApInterfaceInit();
-esp_err_t wifiEnableAp();
+error_t lanInterfaceInit(LanConfig *config);
+error_t staWifiInit(StaWifiConfig *config);
+error_t apWifiInit(ApWifiConfig *config);
+esp_err_t wifiConnect(StaWifiConfig *ifConfig);
+esp_err_t wifiEnableAp(ApWifiConfig *ifConfig);
 
 #endif

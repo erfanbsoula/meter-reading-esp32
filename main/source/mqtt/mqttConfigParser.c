@@ -12,6 +12,9 @@ bool_t parseMqttConfig(MqttConfig *mqttConfig, char_t *data);
 bool_t mqttParseHelper(MqttConfig *mqttConfig, cJSON *root);
 bool_t isValidIpAddress(char_t *ipAddress_);
 
+char_t* mqttConfigToJson(MqttConfig *mqttConfig);
+bool_t mqttConfigToJsonHelper(MqttConfig *mqttConfig, cJSON *root);
+
 // ********************************************************************************************
 
 bool_t parseMqttConfig(MqttConfig *mqttConfig, char_t *data)
@@ -40,54 +43,52 @@ bool_t parseMqttConfig(MqttConfig *mqttConfig, char_t *data)
 
 bool_t mqttParseHelper(MqttConfig *mqttConfig, cJSON *root)
 {
-   cJSON *serverPort, *loopInterval, *mqttEnable, *timeout;
-   cJSON *serverIP, *statusTopic, *resultTopic;
+   cJSON *child;
+   // ************************************************************
 
-   mqttEnable = cJSON_GetObjectItem(root, "mqttEnable");
-   serverPort = cJSON_GetObjectItem(root, "serverPort");
-   loopInterval = cJSON_GetObjectItem(root, "interval");
-   timeout = cJSON_GetObjectItem(root, "timeout");
+   child = cJSON_GetObjectItem(root, "mqttEnable");
+   if (!cJSON_IsNumber(child)) return FALSE;
+   mqttConfig->mqttEnable = cJSON_GetNumberValue(child);
 
-   serverIP = cJSON_GetObjectItem(root, "serverIP");
-   statusTopic = cJSON_GetObjectItem(root, "statusTopic");
-   resultTopic = cJSON_GetObjectItem(root, "resultTopic");
+   // ************************************************************
 
-   if(!cJSON_IsNumber(mqttEnable) ||
-      !cJSON_IsNumber(serverPort) ||
-      !cJSON_IsNumber(loopInterval) ||
-      !cJSON_IsNumber(timeout) ||
-      !cJSON_IsString(serverIP) ||
-      !cJSON_IsString(statusTopic) ||
-      !cJSON_IsString(resultTopic))
-   {
+   child = cJSON_GetObjectItem(root, "serverIP");
+   if(!cJSON_IsString(child) ||
+      !isValidIpAddress(child->valuestring))
       return FALSE;
-   }
+   ipv4StringToAddr(child->valuestring, &mqttConfig->serverIP);
 
-   mqttConfig->serverIP = mqttStrCopy(serverIP->valuestring);
-   if(!mqttConfig->serverIP ||
-      !isValidIpAddress(mqttConfig->serverIP))
-   {
-      free(mqttConfig->serverIP);
+   // ************************************************************
+
+   child = cJSON_GetObjectItem(root, "serverPort");
+   if (!cJSON_IsNumber(child)) return FALSE;
+   mqttConfig->serverPort = cJSON_GetNumberValue(child);
+
+   // ************************************************************
+
+   child = cJSON_GetObjectItem(root, "timeout");
+   if (!cJSON_IsNumber(child)) return FALSE;
+   mqttConfig->timeout = cJSON_GetNumberValue(child);
+
+   // ************************************************************
+
+   child = cJSON_GetObjectItem(root, "statusTopic");
+   if(!cJSON_IsString(child) ||
+      strlen(child->valuestring) > 19)
       return FALSE;
-   }
+   strcpy(mqttConfig->statusTopic, child->valuestring);
 
-   // !! also check if these are valid topics later !!
-   mqttConfig->statusTopic = mqttStrCopy(statusTopic->valuestring);
-   mqttConfig->messageTopic = mqttStrCopy(resultTopic->valuestring);
-   if(!mqttConfig->statusTopic || !mqttConfig->messageTopic)
-   {
-      free(mqttConfig->serverIP);
-      free(mqttConfig->statusTopic);
-      free(mqttConfig->messageTopic);
+   // ************************************************************
+
+   child = cJSON_GetObjectItem(root, "messageTopic");
+   if(!cJSON_IsString(child) ||
+      strlen(child->valuestring) > 19)
       return FALSE;
-   }
+   strcpy(mqttConfig->messageTopic, child->valuestring);
 
-   mqttConfig->mqttEnable = cJSON_GetNumberValue(mqttEnable);
-   mqttConfig->serverPort = cJSON_GetNumberValue(serverPort);
-   mqttConfig->taskInterval = cJSON_GetNumberValue(loopInterval);
-   mqttConfig->timeout = cJSON_GetNumberValue(timeout);
+   // ************************************************************
+
    mqttConfig->isConfigured = TRUE;
-
    return TRUE;
 }
 
@@ -96,6 +97,8 @@ bool_t mqttParseHelper(MqttConfig *mqttConfig, cJSON *root)
 bool_t isValidIpAddress(char_t *ipAddress_)
 {
    char_t *ipAddress = mqttStrCopy(ipAddress_);
+   if (!ipAddress) return FALSE;
+
    int32_t numParts = 0;
    char_t *part = strtok(ipAddress, ".");
    while (part != NULL)
@@ -112,6 +115,54 @@ bool_t isValidIpAddress(char_t *ipAddress_)
    }
    free(ipAddress);
    return numParts == 4;
+}
+
+// ********************************************************************************************
+
+char_t* mqttConfigToJson(MqttConfig *mqttConfig)
+{
+   if (mqttConfig == NULL)
+      return NULL;
+
+   char_t *jsonStr = NULL;
+   cJSON *root = cJSON_CreateObject();
+   bool_t result = mqttConfigToJsonHelper(mqttConfig, root);
+   if (result) jsonStr = cJSON_Print(root);
+   cJSON_Delete(root);
+   return jsonStr;
+}
+
+// ********************************************************************************************
+
+bool_t mqttConfigToJsonHelper(MqttConfig *mqttConfig, cJSON *root)
+{
+   cJSON *child;
+
+   child = cJSON_AddNumberToObject(root,
+      "mqttEnable", mqttConfig->mqttEnable);
+   if (!child) return FALSE;
+
+   child = cJSON_AddStringToObject(root,
+      "serverIP", ipv4AddrToString(mqttConfig->serverIP, NULL));
+   if (!child) return FALSE;
+
+   child = cJSON_AddNumberToObject(root,
+      "serverPort", mqttConfig->serverPort);
+   if (!child) return FALSE;
+
+   child = cJSON_AddNumberToObject(root,
+      "timeout", mqttConfig->timeout);
+   if (!child) return FALSE;
+
+   child = cJSON_AddStringToObject(root,
+      "statusTopic", mqttConfig->statusTopic);
+   if (!child) return FALSE;
+
+   child = cJSON_AddStringToObject(root,
+      "messageTopic", mqttConfig->messageTopic);
+   if (!child) return FALSE;
+
+   return TRUE;
 }
 
 // ********************************************************************************************

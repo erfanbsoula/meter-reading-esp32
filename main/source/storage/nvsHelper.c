@@ -7,15 +7,17 @@
 #define LOG_TAG "NVS"
 #define NVS_PAGE_NAME "storage"
 
+static nvs_handle_t nvsHandle;
+
 // ********************************************************************************************
 // forward declaration of functions
 
 void nvsInitialize();
-nvs_handle_t nvsStart();
-bool_t nvsSaveString(char_t *varName, char_t *varValue);
-bool_t nvsReadString(char_t *varName, char_t **varValue);
-char_t* allocateStringMem(nvs_handle_t nvsHandle, char_t *varName);
-bool_t nvsFinish(nvs_handle_t nvsHandle);
+bool_t nvsStart();
+void nvsFinish();
+
+bool_t nvsGetBlob(char_t *key, void *blob, size_t size);
+bool_t nvsSetBlob(char_t *key, void *blob, size_t size);
 
 // ********************************************************************************************
 
@@ -32,135 +34,94 @@ void nvsInitialize()
       err = nvs_flash_init();
    }
    ESP_ERROR_CHECK(err);
+   nvsHandle = NULL;
 }
 
 // ********************************************************************************************
 
 /**
- * loads the NVS page and returns it's handle.
- * returns Null in case of failure.
+ * opens the NVS page and saves it's handle.
+ * returns FALSE in case of failure.
  */
-nvs_handle_t nvsStart()
+bool_t nvsStart()
 {
-   nvs_handle_t nvsHandle;
-
    // open the NVS page
    esp_err_t err = nvs_open(NVS_PAGE_NAME, NVS_READWRITE, &nvsHandle);
    if (err != ESP_OK) {
       ESP_LOGE(LOG_TAG, "Error (%s) opening NVS handle!\n",
          esp_err_to_name(err));
-      
-      return 0;
+
+      nvsHandle = NULL;
+      return FALSE;
    }
 
-   return nvsHandle;
+   return TRUE;
 }
 
 // ********************************************************************************************
 
 /**
- * saves the string as a key-value pair varName:varValue in NVS.
- * varValue can be accessed using the varName key.
- */
-bool_t nvsSaveString(char_t *varName, char_t *varValue)
-{
-   nvs_handle_t nvsHandle = nvsStart();
-   if (!nvsHandle)
-      return false;
-
-   // the actual storage will not be updated until nvsFinish is called.
-   esp_err_t err = nvs_set_str(nvsHandle, varName, varValue);
-   if (err != ESP_OK) {
-      ESP_LOGE(LOG_TAG, "Failed to set the string value!");
-      return false;
-   }
-
-   return nvsFinish(nvsHandle);
-}
-
-// ********************************************************************************************
-
-/**
- * reads the value of varName key in NVS.
+ * reads the content of the key in NVS
+ * and fills the blob.
  * 
- * string memory is allocated in the function.
- * the pointer to the string is saved at (*varValue)
- * free (*varValue) after you're done
- * 
- * string (*varValue) is null-terminated
+ * needs the nvs already started and
+ * doesn't close the nvs when done!
  */
-bool_t nvsReadString(char_t *varName, char_t **varValue)
+bool_t nvsGetBlob(char_t *key, void *blob, size_t size)
 {
-   nvs_handle_t nvsHandle = nvsStart();
-   if (!nvsHandle)
-      return false;
+   if (!nvsHandle) return FALSE;
 
-   char_t *strMem = allocateStringMem(nvsHandle, varName);
-   if (strMem == NULL)
-      return false;
-
-   size_t required_size;
-   esp_err_t err = nvs_get_str(
-      nvsHandle, varName, strMem, &required_size);
-
-   if (err != ESP_OK) {
-      ESP_LOGE(LOG_TAG, "Failed to get the value of %s!", varName);
-      free(strMem);
-      return false;
-   }
-   strMem[required_size] = '\0';
-
-   if (!nvsFinish(nvsHandle)){
-      free(strMem);
-      return false;
+   esp_err_t err = nvs_get_str(nvsHandle, key, blob, &size);
+   if (err != ESP_OK)
+   {
+      ESP_LOGE(LOG_TAG, "failed to get %s!", key);
+      return FALSE;
    }
 
-   (*varValue) = strMem;
-   return true;
+   return TRUE;
 }
 
 // ********************************************************************************************
 
 /**
- * allocates enough memory to store value of the varName
- * returns Null in case of failure
+ * closes the nvs handle and frees allocated resources.
  */
-char_t* allocateStringMem(nvs_handle_t nvsHandle, char_t *varName)
+void nvsFinish()
 {
-   // get the size of value string
-   size_t required_size;
-   esp_err_t err = nvs_get_str(nvsHandle, varName, NULL, &required_size);
-   if (err != ESP_OK) {
-      ESP_LOGE(LOG_TAG, "Failed to get the value of %s!", varName);
-      return NULL;
-   }
-
-   // allocate needed memory to store the value string
-   char_t *strMem = malloc(required_size + 1);
-   if (strMem == NULL) {
-      ESP_LOGE(LOG_TAG, "memory allocation failed!");
-      return NULL;
-   }
-
-   return strMem;
-}
-
-// ********************************************************************************************
-
-/**
- * writes the pending changes to non-volatile storage
- * and closes the storage handle and frees allocated resources.
- */
-bool_t nvsFinish(nvs_handle_t nvsHandle)
-{
-   esp_err_t err = nvs_commit(nvsHandle);
-   if (err != ESP_OK) {
-      ESP_LOGE(LOG_TAG, "Failed to commit!");
-      return false;
-   }
-
    nvs_close(nvsHandle);
-   return true;
+   nvsHandle = NULL;
+}
+
+// ********************************************************************************************
+
+/**
+ * saves the blob as a key-value pair in NVS.
+ * blob can be accessed later using the key.
+ * 
+ * starts the nvs by itself and
+ * closes the nvs handle when done!
+ */
+bool_t nvsSetBlob(char_t *key, void *blob, size_t size)
+{
+   if(nvsHandle || !nvsStart()) return FALSE;
+
+   esp_err_t err = nvs_set_blob(nvsHandle, key, blob, size);
+   if (err != ESP_OK)
+   {
+      ESP_LOGE(LOG_TAG, "failed to set %s!", key);
+      return FALSE;
+   }
+
+   // write the pending changes to non-volatile storage
+   err = nvs_commit(nvsHandle);
+   if (err != ESP_OK)
+   {
+      ESP_LOGE(LOG_TAG, "failed to commit changes!");
+      return FALSE;
+   }
+
+   nvsFinish(nvsHandle);
+   return TRUE;
 }
 
 // ********************************************************************************************

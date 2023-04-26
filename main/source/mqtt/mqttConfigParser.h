@@ -5,5 +5,6 @@
 #include "mqttHelper.h"
 
 bool_t parseMqttConfig(MqttConfig *mqttConfig, char_t *data);
+char_t* mqttConfigToJson(MqttConfig *mqttConfig);
 
 #endif

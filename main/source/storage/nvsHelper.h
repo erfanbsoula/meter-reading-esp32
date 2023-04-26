@@ -4,7 +4,11 @@
 #include "os_port.h"
 
 void nvsInitialize();
-bool_t nvsSaveString(char_t* varName, char_t* varValue);
-bool_t nvsReadString(char_t* varName, char_t** varValue);
+
+bool_t nvsStart();
+void nvsFinish();
+
+bool_t nvsGetBlob(char_t *key, void *blob, size_t size);
+bool_t nvsSetBlob(char_t *key, void *blob, size_t size);
 
 #endif
