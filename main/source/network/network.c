@@ -9,7 +9,7 @@
 #include "esp_log.h"
 #include "debug.h"
 
-#include "appEnv.h"
+#include "source/appEnv.h"
 #include "source/server/server.h"
 
 void wifiEventHandler(void *arg, esp_event_base_t eventBase,

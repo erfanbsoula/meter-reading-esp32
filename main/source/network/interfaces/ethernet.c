@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include "network.h"
+#include "source/network/network.h"
 #include "drivers/mac/esp32_eth_driver.h"
 #include "drivers/phy/lan8720_driver.h"
 #include "dhcp/dhcp_client.h"
@@ -56,7 +56,7 @@ error_t lanInterfaceInit(LanConfig *config)
    NetInterface *interface = &netInterface[0];
 
    netSetInterfaceName(interface, APP_IF0_NAME);
-   netSetHostname(interface, config->hostname);
+   netSetHostname(interface, config->hostName);
    netSetMacAddr(interface, &config->macAddress);
 
    // select the relevant network adapter

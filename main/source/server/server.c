@@ -109,14 +109,23 @@ error_t routerHelper(HttpConnection *connection,
 
    if (!strcmp(uri, "/ai"))
       return getAIHandler(connection);
+
+   if (!strcmp(uri, "/mqttConfig"))
+      return mqttConfigHandler(connection);
+
+   if (!strcmp(uri, "/lan"))
+      return lanConfigHandler(connection);
    
    if (!strcmp(uri, "/stawifi"))
-      return netConfigHandler(connection, STA_WIFI_INTERFACE);
+      return staWifiConfigHandler(connection);
 
    if (!strcmp(uri, "/apwifi"))
-      return netConfigHandler(connection, AP_WIFI_INTERFACE);
+      return apWifiConfigHandler(connection);
    
-   if (!strcmp(uri, "/reset")) {
+   if (!strcmp(uri, "/reset"))
+   {
+      apiSendSuccessManual(connection, "done!");
+      osDelayTask(50);
       esp_restart();
       return NO_ERROR;
    }

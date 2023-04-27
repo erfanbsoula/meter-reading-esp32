@@ -2,7 +2,7 @@
 #include <string.h>
 #include "esp_wifi.h"
 #include "core/net.h"
-#include "network.h"
+#include "source/network/network.h"
 #include "source/storage/storage.h"
 #include "drivers/wifi/esp32_wifi_driver.h"
 #include "dhcp/dhcp_client.h"

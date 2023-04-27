@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "esp_wifi.h"
-#include "network.h"
+#include "source/network/network.h"
 #include "drivers/wifi/esp32_wifi_driver.h"
 #include "dhcp/dhcp_client.h"
 #include "ipv6/slaac.h"

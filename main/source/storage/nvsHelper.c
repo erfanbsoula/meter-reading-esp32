@@ -34,7 +34,7 @@ void nvsInitialize()
       err = nvs_flash_init();
    }
    ESP_ERROR_CHECK(err);
-   nvsHandle = NULL;
+   nvsHandle = 0;
 }
 
 // ********************************************************************************************
@@ -51,7 +51,7 @@ bool_t nvsStart()
       ESP_LOGE(LOG_TAG, "Error (%s) opening NVS handle!\n",
          esp_err_to_name(err));
 
-      nvsHandle = NULL;
+      nvsHandle = 0;
       return FALSE;
    }
 
@@ -71,7 +71,7 @@ bool_t nvsGetBlob(char_t *key, void *blob, size_t size)
 {
    if (!nvsHandle) return FALSE;
 
-   esp_err_t err = nvs_get_str(nvsHandle, key, blob, &size);
+   esp_err_t err = nvs_get_blob(nvsHandle, key, blob, &size);
    if (err != ESP_OK)
    {
       ESP_LOGE(LOG_TAG, "failed to get %s!", key);
@@ -89,7 +89,7 @@ bool_t nvsGetBlob(char_t *key, void *blob, size_t size)
 void nvsFinish()
 {
    nvs_close(nvsHandle);
-   nvsHandle = NULL;
+   nvsHandle = 0;
 }
 
 // ********************************************************************************************

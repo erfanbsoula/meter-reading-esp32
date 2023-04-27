@@ -34,6 +34,7 @@ bool_t parseImgConfig(ImgConfig *imgConfig, char_t *data)
    }
 
    bool_t res = parseHelper(imgConfig, root);   
+   if (res) imgConfig->isConfigured = TRUE;
 
    cJSON_Delete(root);
    return res;
@@ -60,6 +61,9 @@ bool_t fillAttributes(ImgConfig *imgConfig, cJSON *root)
    if (!cJSON_IsNumber(node)) return FALSE;
    imgConfig->digitCount = cJSON_GetNumberValue(node);
 
+   if (imgConfig->digitCount > MAX_DIGIT_COUNT)
+      return FALSE;
+
    node = cJSON_GetObjectItem(root, "invert");
    if (!cJSON_IsBool(node)) return FALSE;
    imgConfig->invert = !cJSON_IsFalse(node);
@@ -71,19 +75,6 @@ bool_t fillAttributes(ImgConfig *imgConfig, cJSON *root)
 
 bool_t fillPositionArray(ImgConfig *imgConfig, cJSON *arrNode)
 {
-   // free the allocated memory by previous execution
-   free(imgConfig->positions);
-
-   // allocate memory to store new digit-positions
-   size_t size = sizeof(Position) * imgConfig->digitCount;
-   imgConfig->positions = (Position*) malloc(size);
-
-   if (imgConfig->positions == NULL)
-   {
-      ESP_LOGE("CJSON", "unable to allocate memory!");
-      return FALSE;
-   }
-
    // loop through each digit's position property
    for (int_t i = 0; i < imgConfig->digitCount; i++)
    {

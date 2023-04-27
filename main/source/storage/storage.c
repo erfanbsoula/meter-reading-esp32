@@ -55,7 +55,7 @@ bool_t retrieveEnvironment(Environment *appEnv)
    osDelayTask(50);
    retrieveImgConfig(&appEnv->imgConfig);
    osDelayTask(50);
-   retrieveUsers(appEnv.users);
+   retrieveUsers(appEnv->users);
    osDelayTask(50);
    retrieveMeterCounter(appEnv->meterCounter);
    osDelayTask(50);
@@ -107,7 +107,7 @@ void retrieveApWifiConfig(ApWifiConfig *apWifiConfig)
       NVS_apWifiConfig_KEY, apWifiConfig, sizeof(ApWifiConfig));
    
    if (!result)
-      staWifiSetDefaultConfig(apWifiConfig);
+      apWifiSetDefaultConfig(apWifiConfig);
 }
 
 bool_t saveApWifiConfig(ApWifiConfig *apWifiConfig)

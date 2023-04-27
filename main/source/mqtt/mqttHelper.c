@@ -6,7 +6,7 @@
 #include "os_port_freertos.h"
 #include "source/storage/storage.h"
 #include "esp_log.h"
-#include "appEnv.h"
+#include "source/appEnv.h"
 
 static const char *LOG_TAG = "mqtt";
 
@@ -15,12 +15,6 @@ MqttClientContext mqttClientContext;
 
 #define MESSAGE_QUEUE_LEN 5
 char_t *messageQueue[MESSAGE_QUEUE_LEN];
-
-// static const char_t *DEFAULT_SERVER_IP = "192.168.8.10";
-// static const uint16_t DEFAULT_SERVER_PORT = 1883;
-// static const systime_t DEFAULT_LOOP_DELAY = 10000;
-// static const char_t *DEFAULT_STATUS_TOPIC = "board/status";
-// static const char_t *DEFAULT_MESSAGE_TOPIC = "board/result";
 
 // ********************************************************************************************
 // forward declaration of functions
@@ -37,7 +31,7 @@ error_t mqttProcessMessageQueue();
 void mqttMessageQueueInit();
 bool_t mqttMessageQueuePush(char_t *message);
 void mqttMessageQueuePop();
-char_t* mqttStrCopy(char_t *str);
+static char_t* mqttStrCopy(char_t *str);
 
 // ********************************************************************************************
 
@@ -107,6 +101,10 @@ void mqttMainTask(void *param)
 error_t mqttConnect()
 {
    error_t error;
+
+   IpAddr serverIpAddr;
+   serverIpAddr.ipv4Addr = appEnv.mqttConfig.serverIP;
+   serverIpAddr.length = sizeof(Ipv4Addr);
 
    mqttClientSetTransportProtocol(
       &mqttClientContext, MQTT_TRANSPORT_PROTOCOL_TCP);
@@ -221,7 +219,7 @@ void mqttMessageQueuePop()
 
 // ********************************************************************************************
 
-char_t* mqttStrCopy(char_t *str)
+static char_t* mqttStrCopy(char_t *str)
 {
    char_t *strCopied = malloc(strlen(str) + 1);
    if (strCopied == NULL) {

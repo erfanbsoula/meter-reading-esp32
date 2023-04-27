@@ -4,13 +4,17 @@
 #include "core/net.h"
 #include "esp_err.h"
 
+#define MAX_HOSTNAME_LENGTH 15
+#define MAX_SSID_LENGTH 31
+#define MAX_PASSWORD_LENGTH 31
+
 typedef struct _LanConfig LanConfig;
 typedef struct _StaWifiConfig StaWifiConfig;
 typedef struct _ApWifiConfig ApWifiConfig;
 
 struct _LanConfig
 {
-   char_t hostname[16];
+   char_t hostName[MAX_HOSTNAME_LENGTH+1];
    MacAddr macAddress;
    uint8_t enableDhcp;
    Ipv4Addr hostAddr;
@@ -23,7 +27,7 @@ struct _LanConfig
 struct _StaWifiConfig
 {
    uint8_t enableInterface;
-   char_t hostName[16];
+   char_t hostName[MAX_HOSTNAME_LENGTH+1];
    MacAddr macAddress;
    uint8_t useDhcpClient;
    Ipv4Addr hostAddr;
@@ -31,14 +35,14 @@ struct _StaWifiConfig
    Ipv4Addr defaultGateway;
    Ipv4Addr primaryDns;
    Ipv4Addr secondaryDns;
-   char_t ssid[32];
-   char_t password[32];
+   char_t ssid[MAX_SSID_LENGTH+1];
+   char_t password[MAX_PASSWORD_LENGTH+1];
 };
 
 struct _ApWifiConfig
 {
    uint8_t enableInterface;
-   char_t hostName[16];
+   char_t hostName[MAX_HOSTNAME_LENGTH+1];
    MacAddr macAddress;
    uint8_t useDhcpServer;
    Ipv4Addr hostAddr;
@@ -48,8 +52,8 @@ struct _ApWifiConfig
    Ipv4Addr secondaryDns;
    Ipv4Addr minAddrRange;
    Ipv4Addr maxAddrRange;
-   char_t ssid[32];
-   char_t password[32];
+   char_t ssid[MAX_SSID_LENGTH+1];
+   char_t password[MAX_PASSWORD_LENGTH+1];
 };
 
 void initializeNetworks();

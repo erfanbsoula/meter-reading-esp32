@@ -3,16 +3,14 @@
 #include <stdbool.h>
 #include <string.h>
 #include "handlers.h"
-#include "source/network/network.h"
-#include "source/utils/netConfigParser.h"
+#include "source/storage/storage.h"
 #include "source/serial/uartHelper.h"
 #include "source/server/httpHelper.h"
-#include "source/appEnv.h"
-#include "source/storage/storage.h"
+#include "source/network/netConfigParser.h"
 #include "source/utils/imgConfigParser.h"
 #include "source/mqtt/mqttConfigParser.h"
-#include "source/utils/cJSON.h"
 #include "esp_log.h"
+#include "source/appEnv.h"
 
 static const uint_t READ_STREAM_BUF_SIZE = 511;
 static const char_t *LOG_TAG = "configHandler";
@@ -23,6 +21,9 @@ static const char_t *LOG_TAG = "configHandler";
 error_t imgConfigHandler(HttpConnection *connection);
 bool_t sendConfigToK210(ImgConfig *imgConfig);
 error_t mqttConfigHandler(HttpConnection *connection);
+error_t lanConfigHandler(HttpConnection *connection);
+error_t staWifiConfigHandler(HttpConnection *connection);
+error_t apWifiConfigHandler(HttpConnection *connection);
 
 // ********************************************************************************************
 
@@ -46,22 +47,19 @@ error_t imgConfigHandler(HttpConnection *connection)
       size_t length = 0;
       httpReadStream(connection, data, READ_STREAM_BUF_SIZE, &length, 0);
       data[length] = '\0';
-      parsingResult = parseImgConfig(&(appEnv.imgConfig), data);
+      parsingResult = parseImgConfig(&appEnv.imgConfig, data);
+      free(data);
    }
    else ESP_LOGE(LOG_TAG, "couldn't allocate memory!");
 
    if (parsingResult)
    {
-      free(appEnv.meterCounter);
-      appEnv.meterCounter = NULL;
-      appEnv.imgConfig.isConfigured = TRUE;
-      cJSON_Minify(data);
-      saveImgConfigJson(data);
-      sendConfigToK210(&(appEnv.imgConfig));
+      appEnv.meterCounter[0] = '\0';
+      saveImgConfig(&appEnv.imgConfig);
+      sendConfigToK210(&appEnv.imgConfig);
    }
 
    uartRelease();
-   free(data);
 
    if (parsingResult)
       return apiSendSuccessManual(connection, "Configs Recieved!");
@@ -77,14 +75,14 @@ error_t imgConfigHandler(HttpConnection *connection)
  */
 bool_t sendConfigToK210(ImgConfig *imgConfig)
 {
-   char_t* str = (char_t*) malloc(300);
-   char_t* tmp = (char_t*) malloc(20);
-   sprintf(str, "config:%d:%d",
+   char_t* str = (char_t*) malloc(MAX_DIGIT_COUNT * 30 + 20);
+   char_t* tmp = (char_t*) malloc(30);
+   sprintf(str, "config:%"PRIu8":%"PRIu8,
       imgConfig->digitCount, imgConfig->invert ? 1 : 0);
 
    for (uint_t i = 0; i < imgConfig->digitCount; i++)
    {
-      sprintf(tmp, ":%d:%d:%d:%d", 
+      sprintf(tmp, ":%"PRIu16":%"PRIu16":%"PRIu16":%"PRIu16, 
          imgConfig->positions[i].x,
          imgConfig->positions[i].y,
          imgConfig->positions[i].width,
@@ -112,6 +110,13 @@ bool_t sendConfigToK210(ImgConfig *imgConfig)
 
 error_t mqttConfigHandler(HttpConnection *connection)
 {
+   if (!strcmp(connection->request.method, "GET"))
+   {
+      char_t *data = mqttConfigToJson(&appEnv.mqttConfig);
+      if (!data) return apiSendRejectionManual(connection);
+      return httpSendJsonAndFreeManual(connection, 200, data);
+   }
+
    if (strcmp(connection->request.method, "POST"))
       return ERROR_NOT_FOUND;
 
@@ -126,14 +131,9 @@ error_t mqttConfigHandler(HttpConnection *connection)
       httpReadStream(connection, data, READ_STREAM_BUF_SIZE, &length, 0);
       data[length] = '\0';
       parsingResult = parseMqttConfig(mqttConfigTmp, data);
+      if (parsingResult) saveMqttConfig(mqttConfigTmp);
    }
    else ESP_LOGE(LOG_TAG, "couldn't allocate memory!");
-
-   if (parsingResult)
-   {
-      cJSON_Minify(data);
-      saveMqttConfigJson(data);
-   }
 
    free(data);
    free(mqttConfigTmp);
@@ -146,12 +146,11 @@ error_t mqttConfigHandler(HttpConnection *connection)
 
 // ********************************************************************************************
 
-error_t netConfigHandler(HttpConnection *connection,
-   NetInterfaceType interface)
+error_t lanConfigHandler(HttpConnection *connection)
 {
    if (!strcmp(connection->request.method, "GET"))
    {
-      char_t *data = getNetConfigJson(interface);
+      char_t *data = lanConfigToJson(&appEnv.lanConfig);
       if (!data) return apiSendRejectionManual(connection);
       return httpSendJsonAndFreeManual(connection, 200, data);
    }
@@ -162,26 +161,96 @@ error_t netConfigHandler(HttpConnection *connection,
    bool_t parsingResult = FALSE;
 
    char_t *data = (char_t*) malloc(READ_STREAM_BUF_SIZE+1);
-   NetInterfaceConfig *netConfig = malloc(sizeof(NetInterfaceConfig));
+   LanConfig *lanConfigTmp = malloc(sizeof(LanConfig));
 
-   if (data && netConfig)
+   if (data && lanConfigTmp)
    {
       size_t length = 0;
       httpReadStream(connection, data, READ_STREAM_BUF_SIZE, &length, 0);
       data[length] = '\0';
-      parsingResult = parseNetConfig(netConfig, data, interface);
+      parsingResult = parseLanConfig(lanConfigTmp, data);
+      if (parsingResult) saveLanConfig(lanConfigTmp);
    }
    else ESP_LOGE(LOG_TAG, "couldn't allocate memory!");
 
+   free(data);
+   free(lanConfigTmp);
+
    if (parsingResult)
+      return apiSendSuccessManual(connection, "Configs Recieved!");
+
+   return apiSendRejectionManual(connection);
+}
+
+// ********************************************************************************************
+
+error_t staWifiConfigHandler(HttpConnection *connection)
+{
+   if (!strcmp(connection->request.method, "GET"))
    {
-      cJSON_Minify(data);
-      saveNetConfigJson(data, interface);
-      freeNetConfigStrs(netConfig);
+      char_t *data = staWifiConfigToJson(&appEnv.staWifiConfig);
+      if (!data) return apiSendRejectionManual(connection);
+      return httpSendJsonAndFreeManual(connection, 200, data);
    }
 
+   if (strcmp(connection->request.method, "POST"))
+      return ERROR_NOT_FOUND;
+
+   bool_t parsingResult = FALSE;
+
+   char_t *data = (char_t*) malloc(READ_STREAM_BUF_SIZE+1);
+   StaWifiConfig *staWifiConfigTmp = malloc(sizeof(StaWifiConfig));
+
+   if (data && staWifiConfigTmp)
+   {
+      size_t length = 0;
+      httpReadStream(connection, data, READ_STREAM_BUF_SIZE, &length, 0);
+      data[length] = '\0';
+      parsingResult = parseStaWifiConfig(staWifiConfigTmp, data);
+      if (parsingResult) saveStaWifiConfig(staWifiConfigTmp);
+   }
+   else ESP_LOGE(LOG_TAG, "couldn't allocate memory!");
+
    free(data);
-   free(netConfig);
+   free(staWifiConfigTmp);
+
+   if (parsingResult)
+      return apiSendSuccessManual(connection, "Configs Recieved!");
+
+   return apiSendRejectionManual(connection);
+}
+
+// ********************************************************************************************
+
+error_t apWifiConfigHandler(HttpConnection *connection)
+{
+   if (!strcmp(connection->request.method, "GET"))
+   {
+      char_t *data = apWifiConfigToJson(&appEnv.apWifiConfig);
+      if (!data) return apiSendRejectionManual(connection);
+      return httpSendJsonAndFreeManual(connection, 200, data);
+   }
+
+   if (strcmp(connection->request.method, "POST"))
+      return ERROR_NOT_FOUND;
+
+   bool_t parsingResult = FALSE;
+
+   char_t *data = (char_t*) malloc(READ_STREAM_BUF_SIZE+1);
+   ApWifiConfig *apWifiConfigTmp = malloc(sizeof(ApWifiConfig));
+
+   if (data && apWifiConfigTmp)
+   {
+      size_t length = 0;
+      httpReadStream(connection, data, READ_STREAM_BUF_SIZE, &length, 0);
+      data[length] = '\0';
+      parsingResult = parseApWifiConfig(apWifiConfigTmp, data);
+      if (parsingResult) saveApWifiConfig(apWifiConfigTmp);
+   }
+   else ESP_LOGE(LOG_TAG, "couldn't allocate memory!");
+
+   free(data);
+   free(apWifiConfigTmp);
 
    if (parsingResult)
       return apiSendSuccessManual(connection, "Configs Recieved!");

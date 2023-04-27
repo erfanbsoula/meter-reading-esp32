@@ -7,10 +7,11 @@
 
 error_t imgConfigHandler(HttpConnection *connection);
 error_t mqttConfigHandler(HttpConnection *connection);
+error_t lanConfigHandler(HttpConnection *connection);
+error_t staWifiConfigHandler(HttpConnection *connection);
+error_t apWifiConfigHandler(HttpConnection *connection);
+
 error_t cameraImgHandler(HttpConnection* connection);
 error_t getAIHandler(HttpConnection *connection);
-
-error_t netConfigHandler(HttpConnection *connection,
-   NetInterfaceType interface);
 
 #endif

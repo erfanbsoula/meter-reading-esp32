@@ -10,7 +10,6 @@
 
 bool_t parseMqttConfig(MqttConfig *mqttConfig, char_t *data);
 bool_t mqttParseHelper(MqttConfig *mqttConfig, cJSON *root);
-bool_t isValidIpAddress(char_t *ipAddress_);
 
 char_t* mqttConfigToJson(MqttConfig *mqttConfig);
 bool_t mqttConfigToJsonHelper(MqttConfig *mqttConfig, cJSON *root);
@@ -44,6 +43,8 @@ bool_t parseMqttConfig(MqttConfig *mqttConfig, char_t *data)
 bool_t mqttParseHelper(MqttConfig *mqttConfig, cJSON *root)
 {
    cJSON *child;
+   error_t error;
+
    // ************************************************************
 
    child = cJSON_GetObjectItem(root, "mqttEnable");
@@ -53,10 +54,10 @@ bool_t mqttParseHelper(MqttConfig *mqttConfig, cJSON *root)
    // ************************************************************
 
    child = cJSON_GetObjectItem(root, "serverIP");
-   if(!cJSON_IsString(child) ||
-      !isValidIpAddress(child->valuestring))
-      return FALSE;
-   ipv4StringToAddr(child->valuestring, &mqttConfig->serverIP);
+   if(!cJSON_IsString(child)) return FALSE;
+   error = ipv4StringToAddr(
+      child->valuestring, &mqttConfig->serverIP);
+   if (error) return FALSE;
 
    // ************************************************************
 
@@ -74,7 +75,7 @@ bool_t mqttParseHelper(MqttConfig *mqttConfig, cJSON *root)
 
    child = cJSON_GetObjectItem(root, "statusTopic");
    if(!cJSON_IsString(child) ||
-      strlen(child->valuestring) > 19)
+      strlen(child->valuestring) > MQTT_MAX_TOPIC_LENGTH)
       return FALSE;
    strcpy(mqttConfig->statusTopic, child->valuestring);
 
@@ -82,7 +83,7 @@ bool_t mqttParseHelper(MqttConfig *mqttConfig, cJSON *root)
 
    child = cJSON_GetObjectItem(root, "messageTopic");
    if(!cJSON_IsString(child) ||
-      strlen(child->valuestring) > 19)
+      strlen(child->valuestring) > MQTT_MAX_TOPIC_LENGTH)
       return FALSE;
    strcpy(mqttConfig->messageTopic, child->valuestring);
 
@@ -90,31 +91,6 @@ bool_t mqttParseHelper(MqttConfig *mqttConfig, cJSON *root)
 
    mqttConfig->isConfigured = TRUE;
    return TRUE;
-}
-
-// ********************************************************************************************
-
-bool_t isValidIpAddress(char_t *ipAddress_)
-{
-   char_t *ipAddress = mqttStrCopy(ipAddress_);
-   if (!ipAddress) return FALSE;
-
-   int32_t numParts = 0;
-   char_t *part = strtok(ipAddress, ".");
-   while (part != NULL)
-   {
-      char *endptr;
-      long value = strtol(part, &endptr, 10);
-      if (endptr == part || value < 0 || value > 255) {
-         free(ipAddress);
-         return FALSE;
-      }
-
-      numParts++;
-      part = strtok(NULL, ".");
-   }
-   free(ipAddress);
-   return numParts == 4;
 }
 
 // ********************************************************************************************
