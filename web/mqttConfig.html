@@ -48,9 +48,9 @@
    <div class="width-full" id="content-container">
       <main>
          <br>
-			<div id="login-container">
-				<div id="login-card" style="width: 500px;">
-					<div id="card-header">
+			<div class="form-container">
+				<div class="form-card" style="width: 500px;">
+					<div class="form-header">
 						<div>MQTT Settings</div>
 					</div>
 					<form id="mqttSettings">
@@ -66,13 +66,13 @@
                         <label for="serverIP">Server IP</label>
                         <input type="text" name="serverIP" id="serverIP">
                      </div>
-                     <div class="margin-sides" style="width: 27%;">
+                     <div class="margin-sides" style="width: 28%;">
                         <label for="serverPort">Server Port</label>
                         <input type="text" name="serverPort" id="serverPort">
                      </div>
-                     <div class="" style="width: 28%;">
-                        <label for="interval">Task Interval</label>
-                        <input type="text" name="interval" id="interval">
+                     <div class="" style="width: 27%;">
+                        <label for="interval">Timeout</label>
+                        <input type="text" name="timeout" id="interval">
                      </div>
                   </div>
                   <div class="row-flex center width-full space-top">
@@ -81,8 +81,8 @@
                         <input type="text" name="statusTopic" id="statusTopic">
                      </div>
                      <div class="space-left" style="width: 50%;">
-                        <label for="resultTopic">Result Topic</label>
-                        <input type="text" name="resultTopic" id="resultTopic">
+                        <label for="resultTopic">Message Topic</label>
+                        <input type="text" name="messageTopic" id="resultTopic">
                      </div>
                   </div>
                   <br>

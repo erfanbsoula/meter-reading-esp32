@@ -55,7 +55,13 @@
 					<form id="apWifiConfig">
                   <div class="row-flex center width-full" style="margin: 30px 0;">
                      <div class="space-right row-flex" style="width: 100%;">
-                        <input type='checkbox' id='apEnableDHCP' name='enableDHCP' class="margin-sides">
+                        <input type='checkbox' id='apEnable' name='enableInterface' class="margin-sides">
+                        <div>Enable AP Interface</div>
+                     </div>
+                  </div>
+                  <div class="row-flex center width-full" style="margin: 30px 0;">
+                     <div class="space-right row-flex" style="width: 100%;">
+                        <input type='checkbox' id='useDhcpServer' name='useDhcpServer' class="margin-sides">
                         <div>Enable DHCP Server</div>
                      </div>
                   </div>
@@ -104,7 +110,7 @@
                   <div class="row-flex center width-full space-top">
                      <div class="" style="width: 33%;">
                         <label for="apSSID">SSID</label>
-                        <input type="text" name="SSID" id="apSSID">
+                        <input type="text" name="ssid" id="apSSID">
                      </div>
                      <div class="margin-sides" style="width: 33%;">
                         <label for="apPassword">password</label>
@@ -126,7 +132,13 @@
 					<form id="staWifiConfig">
                   <div class="row-flex center width-full" style="margin: 30px 0;">
                      <div class="space-right row-flex" style="width: 100%;">
-                        <input type='checkbox' id='staEnableDHCP' name='enableDHCP' class="margin-sides">
+                        <input type='checkbox' id='staEnable' name='enableInterface' class="margin-sides">
+                        <div>Enable STA Interface</div>
+                     </div>
+                  </div>
+                  <div class="row-flex center width-full" style="margin: 30px 0;">
+                     <div class="space-right row-flex" style="width: 100%;">
+                        <input type='checkbox' id='useDhcpClient' name='useDhcpClient' class="margin-sides">
                         <div>Enable DHCP Client</div>
                      </div>
                   </div>
@@ -165,7 +177,7 @@
                      </div>
                      <div class="margin-sides" style="width: 33%;">
                         <label for="staSSID">SSID</label>
-                        <input type="text" name="SSID" id="staSSID">
+                        <input type="text" name="ssid" id="staSSID">
                      </div>
                      <div class="" style="width: 33%;">
                         <label for="staPassword">password</label>

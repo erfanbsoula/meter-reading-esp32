@@ -23,9 +23,14 @@ fetch('/apwifi', {method: 'GET'})
         field && (field.value = value)
     }
 
-    if (res.enableDHCP != undefined) {
-        const checkBox = apForm.elements.namedItem("enableDHCP");
-        checkBox.checked = Boolean(res.enableDHCP);
+    if (res.enableInterface != undefined) {
+        const checkBox = apForm.elements.namedItem("enableInterface");
+        checkBox.checked = Boolean(res.enableInterface);
+    }
+
+    if (res.useDhcpServer != undefined) {
+        const checkBox = apForm.elements.namedItem("useDhcpServer");
+        checkBox.checked = Boolean(res.useDhcpServer);
     }
 })
 .catch((error) => {
@@ -43,9 +48,14 @@ fetch('/stawifi', {method: 'GET'})
         field && (field.value = value)
     }
 
-    if (res.enableDHCP != undefined) {
-        const checkBox = staForm.elements.namedItem("enableDHCP");
-        checkBox.checked = Boolean(res.enableDHCP);
+    if (res.enableInterface != undefined) {
+        const checkBox = staForm.elements.namedItem("enableInterface");
+        checkBox.checked = Boolean(res.enableInterface);
+    }
+
+    if (res.useDhcpClient != undefined) {
+        const checkBox = staForm.elements.namedItem("useDhcpClient");
+        checkBox.checked = Boolean(res.useDhcpClient);
     }
 })
 .catch((error) => {
@@ -70,7 +80,7 @@ function isValidIpAddress(ipAddress) {
 }
 
 function isValidHostName(name) {
-    const nameRegex = /^[a-z0-9]{3,15}$/;
+    const nameRegex = /^[a-zA-Z0-9_-]{3,15}$/;
     return nameRegex.test(name);
 }
 
@@ -120,7 +130,7 @@ function checkFormData(formData, ap) {
             return displayError("invalid address range!", errorBox);
     }
 
-    if (!isValidSSID(formData.get('SSID')))
+    if (!isValidSSID(formData.get('ssid')))
         return displayError("invalid SSID!", errorBox);
 
     if (!isValidPassword(formData.get('password')))
@@ -139,8 +149,10 @@ apForm.addEventListener('submit', function(event) {
     for (const [key, value] of formData.entries()) {
         data[key] = value;
     }
-    data["enableDHCP"] = Number(
-        formData.get('enableDHCP') == "on");
+    data["enableInterface"] = Number(
+        document.getElementById('apEnable').checked);
+    data["useDhcpServer"] = Number(
+        document.getElementById('useDhcpServer').checked);
 
     fetch('/apwifi', {
         method: 'POST',
@@ -174,8 +186,10 @@ staForm.addEventListener('submit', function(event) {
     for (const [key, value] of formData.entries()) {
         data[key] = value;
     }
-    data["enableDHCP"] = Number(
-        formData.get('enableDHCP') == "on");
+    data["enableInterface"] = Number(
+        document.getElementById('staEnable').checked);
+    data["useDhcpClient"] = Number(
+        document.getElementById('useDhcpClient').checked);
 
     fetch('/stawifi', {
         method: 'POST',
