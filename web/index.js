@@ -186,7 +186,7 @@ function postConfigsAsync() {
     .catch((error) => {
         let errorBox = element.querySelector('#error-massage');
         errorBox.style.color = "red";
-        errorBox.textContent = "error: " + error.message;
+        errorBox.textContent = error.message;
         errorBox.style.display = "block";
     });
 }
@@ -212,7 +212,7 @@ document.getElementById("button-reload").addEventListener('click', (event) => {
     .catch((error) => {
         let errorBox = element.querySelector('#error-massage');
         errorBox.style.color = "red";
-        errorBox.textContent = "error: " + error.message;
+        errorBox.textContent = error.message;
         errorBox.style.display = "block";
     });
     // reloadCounter += 1;

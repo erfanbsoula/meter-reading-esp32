@@ -1,47 +1,43 @@
-// begin config
 @use 'sass:math';
 
+$HEADER_H: 70px;
+
+$MAIN_MAX_W: 1060px;
+$MAIN_MIN_W: 980px;
+
+$CAM_IMG_W: 560px;
+$CAM_IMG_H: 420px;
+
+$CAM_IMG_W2: 320px;
+$CAM_IMG_H2: 240px;
+
 $RESPONSIVE_EDGE: 1280px;
-
-$CAM_IMG_WIDTH: 560px;
-$CAM_IMG_HEIGHT: 420px;
-$CAM_IMG_WIDTH2: 480px;
-$CAM_IMG_HEIGHT2: 360px;
-$CAM_IMG_WIDTH3: 320px;
-$CAM_IMG_HEIGHT3: 240px;
-
 $FADE_ANIMATION_DURATION: 0.7s;
 
-// end config
 // ********************************************************************************
 // begin color palette:
 
-$CERULEAN: #4a8fdd;
-$MELROSE: #D2BDFF;
-$LIGHT_TANGERINE: #F9CF00;
-$TANGERINE: #F19F4D;
-
-$FOREGROUND_DARK: #1F2535; 
-$FOREGROUND_WHITE: #F7F7F7;
-$BAKCGROUND1: #F1F1F1;
-$BAKCGROUND2: #E8E9EB;
-
 $SOLID_BORDER: #D5D5D5;
+$BAKCGROUND: #E8E9EB;
+$FOREGROUND_DARK: #1F2535;
+$FOREGROUND_WHITE: #F7F7F7;
+
+$CERULEAN: #4A8FDD;
+$MELROSE: #D2BDFF;
+$TANGERINE: #F19F4D;
+$TANGERINE_LIGHT: #F9CF00;
 $GRAY: #858585;
 $DARK_GRAY: #606060;
 
 // end color palette
 // ********************************************************************************
-// begin mixins
 
 @mixin shadow_border($blur_radius, $shadow_radius) {
     border: inset solid rgba(0, 0, 0, 0.2) 1px;
     box-shadow: 0px 0px $blur_radius $shadow_radius rgba(0, 0, 0, 0.15);
 }
 
-// end mixins
 // ********************************************************************************
-// begin global
 
 * {
     font-family: Arial, Verdana, Helvetica, sans-serif;
@@ -49,15 +45,10 @@ $DARK_GRAY: #606060;
 
 body {
     margin: 0px;
-    background-color: $BAKCGROUND2;
+    background-color: $BAKCGROUND;
 }
 
-main {
-    max-width: $CAM_IMG_WIDTH*1.9;
-    min-width: $CAM_IMG_WIDTH*1.7;
-    color: $FOREGROUND_DARK;
-    margin: auto;
-}
+br { margin: 5px 0; }
 
 .row-flex {
     display: flex;
@@ -82,12 +73,163 @@ main {
 .stretch { align-items: stretch; }
 .align-self-2start { align-self: flex-start; }
 .center-text { text-align: center; }
-
-br { margin: 5px 0; }
 .space-left { margin-left: 10px; }
 .space-right { margin-right: 10px; }
 .space-top { margin-top: 15px; }
 .margin-sides { margin: 0 20px; }
+
+// ********************************************************************************
+
+#header {
+    width: 100%;
+    height: $HEADER_H;
+    z-index: 10;
+    position: sticky;
+    top: 0px;
+    background-color: $CERULEAN;
+    color: $FOREGROUND_WHITE;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    cursor: default;
+}
+
+#header_left-content-group {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+
+#header_sidebar-btn {
+    margin-left: 15px;
+}
+
+#header_title {
+    margin-left: 40px;
+    text-align: center;
+    color: $FOREGROUND_WHITE;
+    transition: color 300ms ease-out;
+    font-size: 25px;
+    font-weight: bold;
+    
+    &:hover {
+        color: #F9CF00;
+    }
+}
+
+#header_img {
+    max-height: 50px;
+    margin: 5px;
+    filter: invert(95%);
+}
+
+// ********************************************************************************
+
+#sidebar {
+    width: 0px;
+    position: fixed;
+    top: $HEADER_H;
+    left: 0;
+    bottom: 0;
+    background-color: $FOREGROUND_WHITE;
+    color: $FOREGROUND_DARK;
+    border-style: solid;
+    border-width: 0 1px 0 0;
+    border-color: $SOLID_BORDER;
+    transition: width 500ms;
+}
+
+#sidebar_content-container
+{
+    visibility: hidden;
+    transition-delay: 0ms;
+    width: 100%;
+    height: 100%;
+    color: $DARK_GRAY;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: space-between;
+}
+
+#sidebar_nav {
+    width: 100%;
+
+    .nav_item {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        margin: 30px 20px 0px 20px;
+        padding: 10px 0px;
+        font-size: 18px;
+        box-sizing: border-box;
+        visibility: inherit;
+        border-bottom: solid $SOLID_BORDER 1px;
+        cursor: pointer;
+
+        .nav_item_pointer {
+            visibility: hidden;
+            width: 8px;
+            height: 8px;
+            border-radius: 4px;
+            background-color: $CERULEAN;
+        }
+    }
+}
+
+#sidebar_logout {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    margin: 20px;
+    margin-right: 50px;
+    padding: 10px 18px;
+    cursor: pointer;
+    visibility: inherit;
+    font-size: 18px;
+
+    img {
+        $image-width: 20px;
+        width: $image-width;
+        height: $image-width;
+        transition: margin 100ms ease-in-out;
+        margin-left: 5px;
+        margin-right: 0;
+        filter: invert(0.35);
+    }
+
+    &:hover img {
+        margin-left: 0;
+        margin-right: 5px;
+    }
+}
+
+// ********************************************************************************
+
+#content-container {
+    margin-left: 0;
+    width: 100%;
+}
+
+main {
+    max-width: $CAM_IMG_W*1.9;
+    min-width: $CAM_IMG_W*1.7;
+    color: $FOREGROUND_DARK;
+    margin: auto;
+}
+
+#main-content-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: flex-start;
+    min-width: $CAM_IMG_W2;
+}
+
 
 .card {
     padding: 15px;
@@ -119,44 +261,9 @@ br { margin: 5px 0; }
 
 // end global
 // ********************************************************************************
-// begin header
 
-header {
-    height: 70px;
-    background-color: $CERULEAN;
-    color: $FOREGROUND_WHITE;
-    position: sticky;
-    top: 0;
-    cursor: default;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    z-index: 10;
 
-    // ****************************************
-    .header-img {
-        max-height: 50px;
-        margin: 5px;
-        filter: invert(95%);
-    }
-
-    #header-title {
-        margin-left: 40px;
-        text-align: center;
-        color: $FOREGROUND_WHITE;
-        transition: color 300ms ease-out;
-        font-size: 25px;
-        font-weight: bold;
-        
-        &:hover {
-            color: #F9CF00;
-        }
-    }
-    // ****************************************
-}
-
-#menu-btn {
+.menu-btn {
     $BTN-WIDTH: 40px;
     $BTN-HEIGHT: 25px;
     $LINE-WIDTH: 5px;
@@ -165,7 +272,6 @@ header {
     width: $BTN-WIDTH;
     height: $BTN-HEIGHT;
     position: relative;
-    margin-left: 15px;
     cursor: pointer;
 
     -webkit-transform: rotate(0deg);
@@ -184,7 +290,7 @@ header {
         height: $LINE-WIDTH;
         width: 100%;
         border-radius: $LINE-WIDTH;
-        background: $BAKCGROUND1;
+        background: $FOREGROUND_WHITE;
         opacity: 1;
         left: 0;
 
@@ -238,102 +344,13 @@ header {
 // ********************************************************************************
 // begin sidebar
 
-#sidebar {
-    width: 0px;
-    position: fixed;
-    top: 70px;
-    left: 0;
-    bottom: 0;
-    color: $FOREGROUND_DARK;
-    background-color: $BAKCGROUND1;
-    transition: width 500ms;
-    border-style: solid;
-    border-width: 0 1px 0 0;
-    border-color: $SOLID_BORDER;
-}
 
-#sidebar-content-container {
-    visibility: hidden;
-    transition-delay: 0ms;
-    width: 100%;
-    height: 100%;
-    color: $DARK_GRAY;
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    justify-content: space-between;
-}
-
-nav {
-    width: 100%;
-
-    .nav-item {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        margin: 30px 20px 0px 20px;
-        padding: 10px 0px;
-        font-size: 18px;
-        box-sizing: border-box;
-        visibility: inherit;
-        border-bottom: solid $SOLID_BORDER 1px;
-        cursor: pointer;
-
-        .pointer {
-            visibility: hidden;
-            width: 8px;
-            height: 8px;
-            border-radius: 4px;
-            background-color: $CERULEAN;
-        }
-    }
-}
-
-.exit {
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: flex-start;
-    margin: 20px;
-    margin-right: 50px;
-    padding: 10px 18px;
-    cursor: pointer;
-    visibility: inherit;
-    font-size: 18px;
-
-    img {
-        $image-width: 20px;
-        width: $image-width;
-        height: $image-width;
-        transition: margin 100ms ease-in-out;
-        margin-left: 5px;
-        margin-right: 0;
-        filter: invert(0.35);
-    }
-
-    &:hover img {
-        margin-left: 0;
-        margin-right: 5px;
-
-    }
-}
 
 // end sidebar
 // ********************************************************************************
 // begin content
 
-#content-container {
-    margin-left: 0;
-}
 
-#main-content-container {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: flex-start;
-    min-width: $CAM_IMG_WIDTH3;
-}
 
 .rectangle {
     z-index: 2;
@@ -381,8 +398,8 @@ nav {
 }
 
 #camera-canvas {
-    width: $CAM_IMG_WIDTH;
-    height: $CAM_IMG_HEIGHT;
+    width: $CAM_IMG_W;
+    height: $CAM_IMG_H;
     box-sizing: content-box;
     @include shadow_border(8px, 4px);
     border-width: 0;
@@ -536,7 +553,7 @@ input[type=checkbox] {
 
 // @media only screen and (max-width: $RESPONSIVE_EDGE) {
 //     main {
-//         max-width: $CAM_IMG_WIDTH + 40px;
+//         max-width: $CAM_IMG_W + 40px;
 //     }
 
 //     #sidebar, #menu-btn, #logo-img {
@@ -556,25 +573,25 @@ input[type=checkbox] {
 //     }
 // }
 
-// @media only screen and (max-width: ($CAM_IMG_WIDTH + 60px)) {
+// @media only screen and (max-width: ($CAM_IMG_W + 60px)) {
 //     main {
-//         max-width: $CAM_IMG_WIDTH2 + 40px;
+//         max-width: $CAM_IMG_W2 + 40px;
 //     }
 
 //     #camera-canvas {
-//         width: $CAM_IMG_WIDTH2;
-//         height: $CAM_IMG_HEIGHT2;
+//         width: $CAM_IMG_W2;
+//         height: $CAM_IMG_H2;
 //     }
 // }
 
-// @media only screen and (max-width: ($CAM_IMG_WIDTH2 + 60px)) {    
+// @media only screen and (max-width: ($CAM_IMG_W2 + 60px)) {    
 //     main {
-//         max-width: $CAM_IMG_WIDTH3 + 40px;
+//         max-width: $CAM_IMG_W3 + 40px;
 //     }
 
 //     #camera-canvas {
-//         width: $CAM_IMG_WIDTH3;
-//         height: $CAM_IMG_HEIGHT3;
+//         width: $CAM_IMG_W3;
+//         height: $CAM_IMG_H3;
 //     }
 // }
 
