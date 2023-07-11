@@ -58,6 +58,10 @@ br {
   margin-top: 15px;
 }
 
+.space-bottom {
+  margin-bottom: 15px;
+}
+
 .margin-sides {
   margin: 0 20px;
 }
@@ -500,6 +504,7 @@ input[type=checkbox] {
 
 .check-mark {
   width: 28px;
+  height: 28px;
   display: inline;
   margin: 0;
 }

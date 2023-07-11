@@ -170,6 +170,8 @@ class RectangleDrawerContext {
     }
 
     deleteAllRectangles() {
+        if (!this.draw) return;
+
         while (0 < this.rectangles.length) {
             this.deleteLastRectangle();
         }
@@ -177,6 +179,8 @@ class RectangleDrawerContext {
     }
 
     deleteLastRectangle() {
+        if (!this.draw) return;
+
         if (this.count > 0) {
             this.rectangles.pop().remove();
             this.rectangleMoveContexts.pop();

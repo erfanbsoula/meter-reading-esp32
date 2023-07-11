@@ -29,13 +29,17 @@
    <div id="sidebar">
       <div id="sidebar_content-container">
          <nav id="sidebar_nav">
+            <div onclick="window.location.href='netConfig.html';" class="nav_item">
+               <div class="nav_item_pointer"></div>
+               <div class="space-left">Network Setting</div>
+            </div>
             <div onclick="window.location.href='mqttConfig.html';" class="nav_item">
                <div class="nav_item_pointer"></div>
                <div class="space-left">MQTT Setting</div>
             </div>
-            <div onclick="window.location.href='changePass.html';" class="nav_item">
+            <div onclick="window.location.href='index.html';" class="nav_item">
                <div class="nav_item_pointer"></div>
-               <div class="space-left">Change Password</div>
+               <div class="space-left">Image Setting</div>
             </div>
          </nav>
          <div id="sidebar_logout">
@@ -48,9 +52,9 @@
    <div class="width-full" id="content-container">
       <main>
          <br>
-			<div id="login-container">
-				<div id="login-card">
-					<div id="card-header">
+			<div class="form-container">
+				<div class="form-card">
+					<div class="form-header">
 						<div>Change Password</div>
 					</div>
 					<form method="post" action="/login">

@@ -13,7 +13,8 @@ function changeTextAnimated(element, text, buttonText=null, input=false) {
 
     setTimeout(function() {
         element.querySelector('p').textContent = text;
-        element.querySelector('#error-massage').style.display = "none";
+        element.querySelector('.error-massage').style.display = "none";
+        document.getElementById('invert-filter').style.display = "none";
 
         if (buttonText != null)
             element.querySelector('button').textContent = buttonText;
@@ -43,7 +44,7 @@ element.querySelector('button').addEventListener('click', (event) => {
     }
     else if (progress === 1) {
         let value = parseInt(element.querySelector("#digit-count").value);
-        let errorBox = element.querySelector('#error-massage');
+        let errorBox = element.querySelector('.error-massage');
         if (isNaN(value)) {
             errorBox.textContent = "error: please enter a valid number!";
             errorBox.style.display = "block";
@@ -55,7 +56,8 @@ element.querySelector('button').addEventListener('click', (event) => {
             return;
         }
         digitCount = value;
-        // document.querySelectorAll('svg')[0].style.display = "block";
+        document.querySelectorAll('svg')[0].style.display = "block";
+        document.querySelectorAll('svg')[0].parentElement.parentElement.style.color = "#1F2535";
         changeTextAnimated(element, "try to place the meter digits inside the squares as good as you can.");
         setTimeout(function() {
             rectSize = createRectTrainObject(digitCount);
@@ -67,17 +69,19 @@ element.querySelector('button').addEventListener('click', (event) => {
         drawer.setConfig(digitCount, rectSize);
         drawer.enableDrawing();
         document.getElementById('rect-canvas').style.visibility = "hidden";
-        // document.querySelectorAll('svg')[1].style.display = "block";
+        document.querySelectorAll('svg')[1].style.display = "block";
+        document.querySelectorAll('svg')[1].parentElement.parentElement.style.color = "#1F2535";
         progress += 1;
     }
     else if (progress === 3) {
         if (drawer.count < digitCount) {
-            let errorBox = element.querySelector('#error-massage');
+            let errorBox = element.querySelector('.error-massage');
             errorBox.textContent = "error: please manually reconfigue all " + digitCount + " digits.";
             errorBox.style.display = "block";
             return;
         }
-        // document.querySelectorAll('svg')[2].style.display = "block";
+        document.querySelectorAll('svg')[2].style.display = "block";
+        document.querySelectorAll('svg')[2].parentElement.parentElement.style.color = "#1F2535";
         drawer.disableDrawing();
         changeTextAnimated(element, "does camera image need to be inverted?");
         setTimeout(function () {
@@ -86,8 +90,13 @@ element.querySelector('button').addEventListener('click', (event) => {
         progress += 1;
     }
     else if (progress === 4) {
-        // document.querySelectorAll('svg')[3].style.display = "block";
-        postConfigsAsync()
+        document.querySelectorAll('svg')[3].style.display = "block";
+        document.querySelectorAll('svg')[3].parentElement.parentElement.style.color = "#1F2535";
+        changeTextAnimated(element, "click SEND button to submit the configuration", "send");
+        progress += 1;
+    }
+    else if (progress === 5) {
+        postConfigsAsync();
     }
 });
 
@@ -174,7 +183,7 @@ function postConfigsAsync() {
     })
     .then((response) => response.json())
     .then((res) => {
-        let errorBox = element.querySelector('#error-massage');
+        let errorBox = element.querySelector('.error-massage');
         if (res.status == 1)
             errorBox.style.color = "green";
         else if (res.status == 0)
@@ -184,7 +193,7 @@ function postConfigsAsync() {
         errorBox.style.display = "block";
     })
     .catch((error) => {
-        let errorBox = element.querySelector('#error-massage');
+        let errorBox = element.querySelector('.error-massage');
         errorBox.style.color = "red";
         errorBox.textContent = error.message;
         errorBox.style.display = "block";
@@ -210,13 +219,11 @@ document.getElementById("button-reload").addEventListener('click', (event) => {
         fileReader.readAsArrayBuffer(blob);
     })
     .catch((error) => {
-        let errorBox = element.querySelector('#error-massage');
+        let errorBox = element.querySelector('.error-massage');
         errorBox.style.color = "red";
         errorBox.textContent = error.message;
         errorBox.style.display = "block";
     });
-    // reloadCounter += 1;
-    // imageElement.src = 'assets/320x240.jpg?reload=' + reloadCounter;
 })
 
 // rbgData - 3 bytes per pixel - alpha-channel data not used (or valid)
