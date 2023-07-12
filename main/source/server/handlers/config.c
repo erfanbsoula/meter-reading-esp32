@@ -96,8 +96,10 @@ bool_t sendConfigToK210(ImgConfig *imgConfig)
    ESP_LOGI(LOG_TAG, "uart sent %s", str);
    free(str);
 
-   uint8_t *hanshake = uartReadBytesSync(8, 500);
-   if (!hanshake || !strcmp((char*) hanshake, "recieved"))
+   uartClearBuffer();
+   uint8_t *hanshake = uartReadBytesSync(8, 400);
+   hanshake[8] = '\0';
+   if (!hanshake || strcmp((char*) hanshake, "recieved"))
    {
       ESP_LOGE(LOG_TAG, "handshaking failed!");
       return false;

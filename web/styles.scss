@@ -399,6 +399,7 @@ main {
 }
 
 #camera-canvas {
+    background-color: $FOREGROUND_WHITE;
     width: $CAM_IMG_W;
     height: $CAM_IMG_H;
     box-sizing: content-box;

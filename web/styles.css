@@ -337,6 +337,7 @@ main {
 }
 
 #camera-canvas {
+  background-color: #F7F7F7;
   width: 560px;
   height: 420px;
   box-sizing: content-box;
@@ -558,5 +559,3 @@ input[type=checkbox] {
     stroke-dashoffset: 900;
   }
 }
-
-/*# sourceMappingURL=styles.css.map */
