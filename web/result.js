@@ -1,3 +1,27 @@
+function createImageFromData(data, width, height)
+{
+    let mCanvas = document.createElement('canvas');
+    mCanvas.width = width;
+    mCanvas.height = height;
+
+    let mContext = mCanvas.getContext('2d');
+    let mImgData = mContext.createImageData(width, height);
+
+    let srcIndex = 0, dstIndex = 0;
+    for (let pix = 0; pix < width*height;  pix++)
+    {
+        let value = (data[srcIndex] - 48)*16 + (data[srcIndex+1] - 48);
+        mImgData.data[dstIndex] = value;
+        mImgData.data[dstIndex+1] = value;
+        mImgData.data[dstIndex+2] = value;
+        mImgData.data[dstIndex+3] = 255;
+        srcIndex += 2;
+        dstIndex += 4;
+    }
+    mContext.putImageData(mImgData, 0, 0);
+    return mCanvas;
+}
+
 document.getElementById("button-reload").addEventListener('click', (event) => {
     let imageElement = document.getElementById('camera-img');
 
@@ -16,6 +40,8 @@ document.getElementById("button-reload").addEventListener('click', (event) => {
         fileReader.readAsArrayBuffer(blob);
     })
     .catch((error) => {
+        document.getElementById('description').textContent = error.message;
+        document.getElementById('result').textContent = "";
         // let errorBox = element.querySelector('.error-massage');
         // errorBox.style.color = "red";
         // errorBox.textContent = error.message;

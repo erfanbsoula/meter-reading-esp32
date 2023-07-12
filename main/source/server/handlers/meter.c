@@ -56,11 +56,13 @@ bool_t getAiHelper(char_t *res)
    vTaskDelay(100 / portTICK_PERIOD_MS);
    uartSendBytes("AIread:1", 8);
    uint8_t *hanshake = uartReadBytesSync(4, 400);
-   if (!hanshake || !strcmp((char*) hanshake, "done"))
+   hanshake[4] = '\0';
+   if (!hanshake || strcmp((char*) hanshake, "done"))
    {
       ESP_LOGE(LOG_TAG, "handshaking failed!");
       return false;
    }
+   osDelayTask(100);
 
    uartClearBuffer();
    uartSendBytes("AIsend:1", 8);
