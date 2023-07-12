@@ -57,6 +57,7 @@ bool_t getAiHelper(char_t *res)
    uartSendBytes("AIread:1", 8);
    uint8_t *hanshake = uartReadBytesSync(4, 400);
    hanshake[4] = '\0';
+   ESP_LOGI("UART", "recieved '%s'", (char_t*)buffer);
    if (!hanshake || strcmp((char*) hanshake, "done"))
    {
       ESP_LOGE(LOG_TAG, "handshaking failed!");
