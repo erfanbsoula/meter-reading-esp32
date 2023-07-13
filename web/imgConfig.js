@@ -1,50 +1,100 @@
-function hide(element) {
-    element.classList.remove("visible");
-    element.classList.add("hidden");
+let errorBox = element.querySelector('.error-massage');
+let instructionBox = document.getElementById("instruction")
+let imageElement = document.getElementById('camera-img');
+
+// rbgData - 3 bytes per pixel - alpha-channel data not used (or valid)
+function createImageFromData(data, width, height)
+{
+    let mCanvas = document.createElement('canvas');
+    mCanvas.width = width;
+    mCanvas.height = height;
+
+    let mContext = mCanvas.getContext('2d');
+    let mImgData = mContext.createImageData(width, height);
+
+    let srcIndex = 0, dstIndex = 0;
+    for (let pix = 0; pix < width*height;  pix++)
+    {
+        let value = (data[srcIndex] - 48)*16 + (data[srcIndex+1] - 48);
+        mImgData.data[dstIndex] = value;
+        mImgData.data[dstIndex+1] = value;
+        mImgData.data[dstIndex+2] = value;
+        mImgData.data[dstIndex+3] = 255;
+        srcIndex += 2;
+        dstIndex += 4;
+    }
+    mContext.putImageData(mImgData, 0, 0);
+    return mCanvas;
 }
 
-function show(element) {
-    element.classList.remove("hidden");
-    element.classList.add("visible");
+function loadCameraImag()
+{
+    fetch('/camera', {
+        method: 'GET',
+    })
+    .then((response) => response.blob())
+    .then((blob) => {
+        console.log(blob);
+        let fileReader = new FileReader();
+        fileReader.onload = function(event) {
+            console.log("Array size:", fileReader.result.byteLength)
+            let mCanvas = createImageFromData(
+                new Uint8Array(fileReader.result), 320, 240);
+            // make a base64 string of the image data (the array above)
+            imageElement.src = mCanvas.toDataURL();
+        };
+        fileReader.readAsArrayBuffer(blob);
+    })
+    .catch((error) => {
+        errorBox.style.color = "red";
+        errorBox.textContent = error.message;
+        errorBox.style.display = "block";
+        imageElement.src = "assets/cam-icon.svg"
+    });
 }
 
-function changeTextAnimated(element, text, buttonText=null, input=false) {
-    hide(element);
+loadCameraImag();
 
-    setTimeout(function() {
-        element.querySelector('p').textContent = text;
-        element.querySelector('.error-massage').style.display = "none";
-        document.getElementById('invert-filter').style.display = "none";
+// ********************************************************************************************
+let animationTimeout = 1000;
+let checkMarks = document.querySelectorAll('svg');
 
-        if (buttonText != null)
-            element.querySelector('button').textContent = buttonText;
+function changeInstruction(changeOnTimeout)
+{
+    instructionBox.classList.remove("visible");
+    instructionBox.classList.add("hidden");
 
-        if (input)
-            element.querySelector('#digit-count').style.display = "inline";
-        else
-            element.querySelector('#digit-count').style.display = "none";
-    }, 1000)
+    function showOnTimeout()
+    {
+        instructionBox.classList.remove("hidden");
+        instructionBox.classList.add("visible");
+    }
 
-    setTimeout(function () {
-        show(element);
-    }, 1100)
+    setTimeout(changeOnTimeout, animationTimeout);
+    setTimeout(showOnTimeout, animationTimeout+100);
 }
 
-let element = document.getElementById("instruction")
-element.classList.add("visible");
+instructionBox.classList.add("visible");
 
 let progress = 0;
 let digitCount = 0;
 let rectSize = 0;
 
 element.querySelector('button').addEventListener('click', (event) => {
-    if (progress === 0) {
-        changeTextAnimated(element, "enter the number of digits:", "next", true);
+    if (progress === 0)
+    {
+        changeInstruction(() => {
+            instructionBox.querySelector('p').textContent = "enter the number of digits:";
+            instructionBox.querySelector('button').textContent = "next";
+            instructionBox.querySelector('#digit-count').style.display = "inline";
+            errorBox.style.display = "none";
+        });
         progress += 1;
     }
-    else if (progress === 1) {
-        let value = parseInt(element.querySelector("#digit-count").value);
-        let errorBox = element.querySelector('.error-massage');
+
+    else if (progress === 1)
+    {
+        let value = parseInt(instructionBox.querySelector("#digit-count").value);
         if (isNaN(value)) {
             errorBox.textContent = "error: please enter a valid number!";
             errorBox.style.display = "block";
@@ -58,14 +108,15 @@ element.querySelector('button').addEventListener('click', (event) => {
         digitCount = value;
         document.querySelectorAll('svg')[0].style.display = "block";
         document.querySelectorAll('svg')[0].parentElement.parentElement.style.color = "#1F2535";
-        changeTextAnimated(element, "try to place the meter digits inside the squares as good as you can.");
+        changeInstruction(element, "try to place the meter digits inside the squares as good as you can.");
         setTimeout(function() {
             rectSize = createRectTrainObject(digitCount);
         }, 1200)
+        instructionBox.querySelector('#digit-count').style.display = "none";
         progress += 1;
     }
     else if (progress === 2) {
-        changeTextAnimated(element, "now, you can adjust the digits' canvas manually.");
+        changeInstruction(element, "now, you can adjust the digits' canvas manually.");
         drawer.setConfig(digitCount, rectSize);
         drawer.enableDrawing();
         document.getElementById('rect-canvas').style.visibility = "hidden";
@@ -83,7 +134,7 @@ element.querySelector('button').addEventListener('click', (event) => {
         document.querySelectorAll('svg')[2].style.display = "block";
         document.querySelectorAll('svg')[2].parentElement.parentElement.style.color = "#1F2535";
         drawer.disableDrawing();
-        changeTextAnimated(element, "does camera image need to be inverted?");
+        changeInstruction(element, "does camera image need to be inverted?");
         setTimeout(function () {
             document.getElementById('invert-filter').style.display = "block";
         }, 1000)
@@ -92,13 +143,15 @@ element.querySelector('button').addEventListener('click', (event) => {
     else if (progress === 4) {
         document.querySelectorAll('svg')[3].style.display = "block";
         document.querySelectorAll('svg')[3].parentElement.parentElement.style.color = "#1F2535";
-        changeTextAnimated(element, "click SEND button to submit the configuration", "send");
+        changeInstruction(element, "click SEND button to submit the configuration", "send");
         progress += 1;
     }
     else if (progress === 5) {
         postConfigsAsync();
     }
 });
+
+// ********************************************************************************************
 
 function findRectSize(count) {
     let rectSize = 224;
@@ -204,56 +257,3 @@ function postConfigsAsync() {
 document.getElementById("button-reload").addEventListener('click', (event) => {
     loadCameraImag();
 })
-
-function loadCameraImag()
-{
-    let imageElement = document.getElementById('camera-img');
-
-    fetch('/camera', {
-        method: 'GET',
-    })
-    .then((response) => response.blob())
-    .then((blob) => {
-        console.log(blob);
-        let fileReader = new FileReader();
-        fileReader.onload = function(event) {
-            console.log("Array size:", fileReader.result.byteLength)
-            let mCanvas = createImageFromData(new Uint8Array(fileReader.result), 320, 240);
-            imageElement.src = mCanvas.toDataURL(); // make a base64 string of the image data (the array above)
-        };
-        fileReader.readAsArrayBuffer(blob);
-    })
-    .catch((error) => {
-        let errorBox = element.querySelector('.error-massage');
-        errorBox.style.color = "red";
-        errorBox.textContent = error.message;
-        errorBox.style.display = "block";
-    });
-}
-
-// rbgData - 3 bytes per pixel - alpha-channel data not used (or valid)
-function createImageFromData(data, width, height)
-{
-    let mCanvas = document.createElement('canvas');
-    mCanvas.width = width;
-    mCanvas.height = height;
-
-    let mContext = mCanvas.getContext('2d');
-    let mImgData = mContext.createImageData(width, height);
-
-    let srcIndex = 0, dstIndex = 0;
-    for (let pix = 0; pix < width*height;  pix++)
-    {
-        let value = (data[srcIndex] - 48)*16 + (data[srcIndex+1] - 48);
-        mImgData.data[dstIndex] = value;
-        mImgData.data[dstIndex+1] = value;
-        mImgData.data[dstIndex+2] = value;
-        mImgData.data[dstIndex+3] = 255;
-        srcIndex += 2;
-        dstIndex += 4;
-    }
-    mContext.putImageData(mImgData, 0, 0);
-    return mCanvas;
-}
-
-loadCameraImag();

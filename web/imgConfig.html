@@ -50,80 +50,79 @@
       </div>
    </div>
    <div id="content-container">
+      <br><br>
       <main>
-         <br>
-         <div class="margin-sides space-top" id="main-content-container">
 <!-- **************************************************************************************************** -->
 <!-- left column -->
-            <div class="column-flex center margin-sides">
-               <br>
-               <div id="camera-canvas">
-                  <img src="assets/cam-icon.svg" alt="camera image" id="camera-img">
-                  <div id="rect-canvas"></div>
-               </div>
-               <br><br>
-               <div class="row-flex card center" style="padding-left: 30px; padding-right: 30px;">
-                  <button id="button-reload" class="btn">reload</button>
-                  <button id="button-undo" class="btn margin-sides">undo</button>
-                  <button id="button-clear" class="btn">clear</button>
-               </div>
+         <div class="column-flex center margin-sides">
+            <br>
+            <div id="camera-canvas">
+               <img src="" alt="camera image" id="camera-img">
+               <div id="rect-canvas"></div>
             </div>
+            <br><br>
+            <div class="row-flex card center" style="padding-left: 30px; padding-right: 30px;">
+               <button id="button-reload" class="btn">reload</button>
+               <button id="button-undo" class="btn margin-sides">undo</button>
+               <button id="button-clear" class="btn">clear</button>
+            </div>
+         </div>
 <!-- **************************************************************************************************** -->
 <!-- right column -->
-            <div class="column-flex width-full center">
-               <br>
-               <div class="card width-full center-text column-flex center" id="progress">
-                  <div class="row-flex space-top width-full center" style="text-align: left; color: #858585;">
-                     <div style="width: 28px; height: 28px;">
-                        <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 132 132" class="check-mark" style="display: none;">
-                           <circle class="path circle" fill="none" stroke="#73AF55" stroke-width="6" stroke-miterlimit="10" cx="65.1" cy="65.1" r="62.1"/>
-                           <polyline class="path check" fill="none" stroke="#73AF55" stroke-width="6" stroke-linecap="round" stroke-miterlimit="10" points="100.2,40.2 51.5,88.8 29.8,67.5"/>
-                        </svg>
-                     </div>
-                     <span class="space-left" style="width: 40%;"">&#x2022; Digit Count</span>
+         <div class="column-flex width-full center">
+            <br>
+            <div class="card width-full center-text column-flex center" id="progress">
+               <div class="row-flex space-top width-full center" style="text-align: left; color: #858585;">
+                  <div style="width: 28px; height: 28px;">
+                     <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 132 132" class="check-mark" style="display: none;">
+                        <circle class="path circle" fill="none" stroke="#73AF55" stroke-width="6" stroke-miterlimit="10" cx="65.1" cy="65.1" r="62.1"/>
+                        <polyline class="path check" fill="none" stroke="#73AF55" stroke-width="6" stroke-linecap="round" stroke-miterlimit="10" points="100.2,40.2 51.5,88.8 29.8,67.5"/>
+                     </svg>
                   </div>
-                  <div class="row-flex space-top width-full center" style="text-align: left; color: #858585;">
-                     <div style="width: 28px; height: 28px;">
-                        <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 132 132" class="check-mark" style="display: none;">
-                           <circle class="path circle" fill="none" stroke="#73AF55" stroke-width="6" stroke-miterlimit="10" cx="65.1" cy="65.1" r="62.1"/>
-                           <polyline class="path check" fill="none" stroke="#73AF55" stroke-width="6" stroke-linecap="round" stroke-miterlimit="10" points="100.2,40.2 51.5,88.8 29.8,67.5"/>
-                        </svg>
-                     </div>
-                     <span class="space-left"  style="width: 40%;"">&#x2022; Camera Adjustment</span>
-                  </div>
-                  <div class="row-flex space-top width-full center" style="text-align: left; color: #858585;">
-                     <div style="width: 28px; height: 28px;">
-                        <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 132 132" class="check-mark" style="display: none;">
-                           <circle class="path circle" fill="none" stroke="#73AF55" stroke-width="6" stroke-miterlimit="10" cx="65.1" cy="65.1" r="62.1"/>
-                           <polyline class="path check" fill="none" stroke="#73AF55" stroke-width="6" stroke-linecap="round" stroke-miterlimit="10" points="100.2,40.2 51.5,88.8 29.8,67.5"/>
-                        </svg>
-                     </div>
-                     <span class="space-left" style="width: 40%;">&#x2022; Canvas Adjustment</span>
-                  </div>
-                  <div class="row-flex space-top width-full center space-bottom" style="text-align: left; color: #858585;">
-                     <div style="width: 28px; height: 28px;">
-                        <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 132 132" class="check-mark" style="display: none;">
-                           <circle class="path circle" fill="none" stroke="#73AF55" stroke-width="6" stroke-miterlimit="10" cx="65.1" cy="65.1" r="62.1"/>
-                           <polyline class="path check" fill="none" stroke="#73AF55" stroke-width="6" stroke-linecap="round" stroke-miterlimit="10" points="100.2,40.2 51.5,88.8 29.8,67.5"/>
-                        </svg>
-                     </div>
-                     <span class="space-left" style="width: 40%;">&#x2022; Image Filters</span>
-                  </div>
+                  <span class="space-left" style="width: 40%;"">&#x2022; Digit Count</span>
                </div>
-               <br><br>
-               <div class="card width-full center-text column-flex center" id="instruction">
-                  <div class="width-full row-flex center">
-                     <p>Welcome to the Setup Wizard !</p>
-                     <input type='text' id='digit-count' name='digit-count' value="1" class="space-left" style="display: none;">
-                     <input type='checkbox' id='invert-filter' name='invert-filter' class="space-left" style="display: none;">
+               <div class="row-flex space-top width-full center" style="text-align: left; color: #858585;">
+                  <div style="width: 28px; height: 28px;">
+                     <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 132 132" class="check-mark" style="display: none;">
+                        <circle class="path circle" fill="none" stroke="#73AF55" stroke-width="6" stroke-miterlimit="10" cx="65.1" cy="65.1" r="62.1"/>
+                        <polyline class="path check" fill="none" stroke="#73AF55" stroke-width="6" stroke-linecap="round" stroke-miterlimit="10" points="100.2,40.2 51.5,88.8 29.8,67.5"/>
+                     </svg>
                   </div>
-                  <button class="button-gradient">start</button>
-                  <div class="error-massage"></div>
+                  <span class="space-left"  style="width: 40%;"">&#x2022; Camera Adjustment</span>
+               </div>
+               <div class="row-flex space-top width-full center" style="text-align: left; color: #858585;">
+                  <div style="width: 28px; height: 28px;">
+                     <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 132 132" class="check-mark" style="display: none;">
+                        <circle class="path circle" fill="none" stroke="#73AF55" stroke-width="6" stroke-miterlimit="10" cx="65.1" cy="65.1" r="62.1"/>
+                        <polyline class="path check" fill="none" stroke="#73AF55" stroke-width="6" stroke-linecap="round" stroke-miterlimit="10" points="100.2,40.2 51.5,88.8 29.8,67.5"/>
+                     </svg>
+                  </div>
+                  <span class="space-left" style="width: 40%;">&#x2022; Canvas Adjustment</span>
+               </div>
+               <div class="row-flex space-top width-full center space-bottom" style="text-align: left; color: #858585;">
+                  <div style="width: 28px; height: 28px;">
+                     <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 132 132" class="check-mark" style="display: none;">
+                        <circle class="path circle" fill="none" stroke="#73AF55" stroke-width="6" stroke-miterlimit="10" cx="65.1" cy="65.1" r="62.1"/>
+                        <polyline class="path check" fill="none" stroke="#73AF55" stroke-width="6" stroke-linecap="round" stroke-miterlimit="10" points="100.2,40.2 51.5,88.8 29.8,67.5"/>
+                     </svg>
+                  </div>
+                  <span class="space-left" style="width: 40%;">&#x2022; Image Filters</span>
                </div>
             </div>
-<!-- **************************************************************************************************** -->
+            <br><br>
+            <div class="card width-full center-text column-flex center" id="instruction">
+               <div class="width-full row-flex center">
+                  <p>Welcome to the Setup Wizard !</p>
+                  <input type='text' id='digit-count' name='digit-count' value="1" class="space-left" style="display: none;">
+                  <input type='checkbox' id='invert-filter' name='invert-filter' class="space-left" style="display: none;">
+               </div>
+               <button class="button-gradient">start</button>
+               <div class="error-massage"></div>
+            </div>
          </div>
+<!-- **************************************************************************************************** -->
       </main>
+      <br><br>
    </div>
 </div>
 </body>

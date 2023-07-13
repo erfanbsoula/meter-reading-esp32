@@ -1,26 +1,6 @@
 let resultBox = document.getElementById('result');
 let imageElement = document.getElementById('camera-img');
 
-fetch('/camera', {
-    method: 'GET',
-})
-.then((response) => response.blob())
-.then((blob) => {
-    console.log(blob);
-    let fileReader = new FileReader();
-    fileReader.onload = function(event) {
-        console.log("Array size:", fileReader.result.byteLength)
-        let mCanvas = createImageFromData(new Uint8Array(fileReader.result), 320, 240);
-        imageElement.src = mCanvas.toDataURL(); // make a base64 string of the image data (the array above)
-    };
-    fileReader.readAsArrayBuffer(blob);
-})
-.catch((error) => {
-    resultBox.style.color = "#f06060"
-    resultBox.textContent = error.message;
-    // imageElement.classList.add('gg-webcam');
-});
-
 function createImageFromData(data, width, height)
 {
     let mCanvas = document.createElement('canvas');
@@ -45,9 +25,28 @@ function createImageFromData(data, width, height)
     return mCanvas;
 }
 
-document.getElementById("button-fetch").addEventListener('click', (event) => {
-    // let imageElement = document.getElementById('camera-img');
+fetch('/camera', {method: 'GET'})
+.then((response) => response.blob())
+.then((blob) => {
+    console.log(blob);
+    let fileReader = new FileReader();
+    fileReader.onload = function(event) {
+        console.log("Array size:", fileReader.result.byteLength)
+        let mCanvas = createImageFromData(
+            new Uint8Array(fileReader.result), 320, 240);
+        imageElement.src = mCanvas.toDataURL();
+    };
+    fileReader.readAsArrayBuffer(blob);
+})
+.catch((error) => {
+    resultBox.style.color = "#f06060";
+    resultBox.textContent = error.message;
+    imageElement.src = "assets/cam-icon.svg";
+});
 
+// ********************************************************************************************
+
+document.getElementById("button-fetch").addEventListener('click', (event) => {
     fetch('/ai', {
         method: 'GET',
     })

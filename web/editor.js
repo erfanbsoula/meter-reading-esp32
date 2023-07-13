@@ -1,4 +1,5 @@
-class RectangleMoveContext {
+class RectangleMoveContext
+{
     constructor(recangle) {
         this.recangle = recangle;
         this.canvas = recangle.parentElement;
@@ -58,8 +59,8 @@ class RectangleMoveContext {
     }
 }
 
-class RectangleDrawerContext {
-
+class RectangleDrawerContext
+{
     constructor(canvas) {
         this.canvas = canvas;
         this.maxRectCount = 0;

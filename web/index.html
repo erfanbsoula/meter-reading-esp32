@@ -26,7 +26,6 @@
    <div id="sidebar">
       <div id="sidebar_content-container">
          <nav id="sidebar_nav">
-            
             <div onclick="window.location.href='netConfig.html';" class="nav_item">
                <div class="nav_item_pointer"></div>
                <div class="space-left">Network Setting</div>
@@ -51,33 +50,31 @@
       </div>
    </div>
    <div id="content-container">
+      <br><br>
       <main>
-         <br>
-         <div class="margin-sides space-top" id="main-content-container">
 <!-- **************************************************************************************************** -->
 <!-- left column -->
-            <div class="column-flex center margin-sides">
-               <br>
-               <div id="camera-canvas">
-                  <img src="assets/cam-icon.svg" alt="camera image" id="camera-img">
-                  <div id="rect-canvas"></div>
-               </div>
+         <div class="column-flex center space-right">
+            <br>
+            <div id="camera-canvas">
+               <img src="" alt="camera image" id="camera-img">
+               <div id="rect-canvas"></div>
             </div>
-<!-- **************************************************************************************************** -->
-            <div class="column-flex center width-full">
-               <br>
-               <div class="column-flex card width-full center">
-                  <div class="row-flex space-top">
-                     <!-- <button id="button-reload" class="btn space-right">reload imgage</button> -->
-                     <button id="button-fetch" class="btn space-left">fetch ai result</button>
-                  </div>
-                  <div class="space-top space-bottom" id="result">click button to fetch AI result</div>
-               </div>
-            </div>
-<!-- **************************************************************************************************** -->
          </div>
-         <br><br>
+<!-- **************************************************************************************************** -->
+<!-- right column -->
+         <div class="column-flex center width-full space-left">
+            <br>
+            <div class="column-flex card width-full center">
+               <div class="row-flex space-top">
+                  <button id="button-fetch" class="btn space-left">fetch ai result</button>
+               </div>
+               <div class="space-top space-bottom" id="result">click button to fetch AI result</div>
+            </div>
+         </div>
+<!-- **************************************************************************************************** -->
       </main>
+      <br><br>
    </div>
 </div>
 </body>
